@@ -16,7 +16,14 @@ export const siteConfig = {
   ogImage: '/og.png',
 } as const;
 
-/** Commercial model: no subscriptions, one credit pack. */
+/**
+ * Commercial model: no subscriptions, one credit pack.
+ *
+ * amountInPaise is the only price the server ever charges — the checkout order
+ * is built from it, never from anything the client sends. amountLabel is
+ * display-only and must be kept consistent with it; PER_REPORT_LABEL below is
+ * derived, so it cannot drift.
+ */
 export const pricing = {
   packName: '5 Prediction Credits',
   credits: 5,
@@ -24,6 +31,13 @@ export const pricing = {
   amountLabel: '₹99',
   currency: 'INR',
 } as const;
+
+/**
+ * Unit price, for the "what does one report actually cost me" framing that does
+ * the conversion work on the paywall. Derived from the pack price so it can
+ * never drift out of sync with what we charge.
+ */
+export const PER_REPORT_LABEL = `₹${Math.round(pricing.amountInPaise / pricing.credits / 100)}`;
 
 /** A report costs exactly one credit. Re-opening an unlocked report is free forever. */
 export const CREDITS_PER_REPORT = 1;

@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { pricing } from '@/config/site';
+import { pricing, PER_REPORT_LABEL } from '@/config/site';
 
 const included = [
   'Rank prediction & confidence band',
@@ -10,9 +10,10 @@ const included = [
 ];
 
 const bullets = [
+  `Works out to about ${PER_REPORT_LABEL} per report`,
   'Reports stay in your account forever',
   'Credits never expire',
-  'Pay once, re-run as your score sharpens',
+  'Unused credits refunded within 7 days',
 ];
 
 /** Pricing section — 2-column layout matching design doc 1a pricing block */

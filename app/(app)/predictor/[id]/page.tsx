@@ -85,15 +85,12 @@ export default async function PredictionResultPage({ params }: { params: Promise
         }
       />
 
-      {/* Values come from view.headline, never from the prediction row: while
-          locked the rank is banded and confidence/percentile are withheld. */}
       <RankSummary
         expectedScore={prediction.expectedScore}
-        rankMin={view.headline.rankMin}
-        rankMax={view.headline.rankMax}
-        banded={view.headline.banded}
-        confidence={view.headline.confidence}
-        percentile={view.headline.percentile}
+        rankMin={prediction.rankMin}
+        rankMax={prediction.rankMax}
+        confidence={prediction.confidence}
+        percentile={prediction.percentile ?? result.percentile}
         aiqOpportunities={prediction.aiqOpportunities}
         stateOpportunities={prediction.stateOpportunities}
       />

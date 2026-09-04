@@ -7,7 +7,6 @@ import { predictionRepository } from '@/repositories/prediction.repository';
 import { MainTabs } from '@/components/shared/main-tabs';
 import { PredictionForm } from '@/features/predictor/components/prediction-form';
 import { formatDate, formatRankRange } from '@/lib/utils';
-import { toDisplayRank } from '@/services/prediction/prediction.service';
 
 export const metadata: Metadata = {
   title: 'Rank & College Predictor',
@@ -74,14 +73,7 @@ export default async function PredictorPage() {
                 >
                   <div className="flex flex-col gap-1">
                     <span className="text-[14px] font-medium tabular-nums text-[#15191a]">
-                      {(() => {
-                        const rank = toDisplayRank({
-                          status: item.status === 'UNLOCKED' ? 'UNLOCKED' : 'PREVIEW',
-                          rankMin: item.rankMin,
-                          rankMax: item.rankMax,
-                        });
-                        return formatRankRange(rank.min, rank.max);
-                      })()}
+                      {formatRankRange(item.rankMin, item.rankMax)}
                     </span>
                     <span className="text-[12px] text-[#6b7472]">
                       {formatDate(item.createdAt)} · {item.status === 'UNLOCKED' ? 'Unlocked' : 'Preview'}

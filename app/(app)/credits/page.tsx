@@ -5,7 +5,7 @@ import { requireUser } from '@/lib/auth/guards';
 import { prisma } from '@/lib/prisma';
 import { getBalance, listTransactions } from '@/services/credit.service';
 import { features } from '@/lib/env';
-import { pricing } from '@/config/site';
+import { pricing, PER_REPORT_LABEL } from '@/config/site';
 import { PageHeader } from '@/features/dashboard/components/page-header';
 import { BuyCreditsButton } from '@/features/credits/components/buy-credits-button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -71,9 +71,14 @@ export default async function CreditsPage({
             <CardDescription>Everything below, five times over.</CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
-            <div className="flex items-baseline gap-2">
-              <span className="text-4xl font-bold tracking-tight">{pricing.amountLabel}</span>
-              <span className="text-sm text-muted-foreground">one-time · {pricing.credits} credits</span>
+            <div>
+              <div className="flex items-baseline gap-2">
+                <span className="text-4xl font-bold tracking-tight">{pricing.amountLabel}</span>
+                <span className="text-sm text-muted-foreground">one-time · {pricing.credits} credits</span>
+              </div>
+              <p className="mt-1 text-sm text-muted-foreground">
+                About {PER_REPORT_LABEL} per report. No subscription, no auto-renewal.
+              </p>
             </div>
 
             <ul className="grid gap-2 sm:grid-cols-2">

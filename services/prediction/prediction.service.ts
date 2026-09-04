@@ -81,53 +81,9 @@ export async function createPrediction(userId: string, input: CreatePredictionIn
  * Redaction happens on the server: the premium payload must never reach the
  * client for a PREVIEW prediction, because hiding it in CSS is not a paywall.
  */
-/**
- * Bucket edges for the locked rank band.
- *
- * Wide and coarse on purpose. The precise range is the single number a student
- * would screenshot and leave with, so a locked view shows only the bucket it
- * falls in — enough to prove the engine ran, not enough to substitute for the
- * report. Edges are denser at the top because a 500-rank difference decides a
- * seat there and is noise at rank 150,000.
- */
-const RANK_BANDS = [
-  1, 1_000, 2_500, 5_000, 10_000, 25_000, 50_000, 100_000, 200_000, 500_000, 1_000_000, 2_000_000,
-];
-
-/** Widens a computed range to the coarse bucket that fully contains it. */
-export function toRankBand(rankMin: number, rankMax: number): { min: number; max: number } {
-  const min = [...RANK_BANDS].reverse().find((edge) => edge <= rankMin) ?? RANK_BANDS[0]!;
-  const max = RANK_BANDS.find((edge) => edge > rankMax) ?? Math.max(rankMax, min * 2);
-  return { min, max };
-}
-
-/**
- * The rank a given surface is allowed to display.
- *
- * Every list and detail view goes through this rather than reading rankMin and
- * rankMax off the row, so the paywall cannot be forgotten on one screen while
- * being honoured on another.
- */
-export function toDisplayRank(params: {
-  status: 'PREVIEW' | 'UNLOCKED';
-  rankMin: number;
-  rankMax: number;
-}): { min: number; max: number; banded: boolean } {
-  if (params.status === 'UNLOCKED') {
-    return { min: params.rankMin, max: params.rankMax, banded: false };
-  }
-  const band = toRankBand(params.rankMin, params.rankMax);
-  return { ...band, banded: true };
-}
-
 export function toPreviewResult(result: PredictionResult): PredictionResult {
-  const band = toRankBand(result.rankMin, result.rankMax);
   return {
     ...result,
-    // Band the range here too: the payload itself must not carry the precise
-    // numbers, not just the components that happen to render it today.
-    rankMin: band.min,
-    rankMax: band.max,
     bands: { STRONG: [], MODERATE: [], STRETCH: [] },
     recommendedBranches: [],
     recommendedColleges: [],
@@ -140,20 +96,6 @@ export interface PredictionView {
   status: 'PREVIEW' | 'UNLOCKED';
   locked: boolean;
   result: PredictionResult;
-  /**
-   * What the headline block may display. The detail page renders this rather
-   * than the prediction row's own columns — reading those directly is how the
-   * precise rank leaked past the paywall before.
-   */
-  headline: {
-    rankMin: number;
-    rankMax: number;
-    /** True when the range shown is a coarse bucket, not the computed range. */
-    banded: boolean;
-    /** Null while locked: both narrow the rank far enough to substitute for it. */
-    confidence: number | null;
-    percentile: number | null;
-  };
   /** Counts survive redaction — they are the teaser that motivates the unlock. */
   teaser: {
     aiqOpportunities: number;
@@ -172,20 +114,11 @@ export function buildPredictionView(prediction: {
   const full = prediction.resultPayload as unknown as PredictionResult;
   const locked = prediction.status !== 'UNLOCKED';
 
-  const rank = toDisplayRank({ status: prediction.status, rankMin: full.rankMin, rankMax: full.rankMax });
-
   return {
     id: prediction.id,
     status: prediction.status,
     locked,
     result: locked ? toPreviewResult(full) : full,
-    headline: {
-      rankMin: rank.min,
-      rankMax: rank.max,
-      banded: rank.banded,
-      confidence: locked ? null : full.confidence,
-      percentile: locked ? null : full.percentile,
-    },
     teaser: {
       aiqOpportunities: full.aiqOpportunities,
       stateOpportunities: full.stateOpportunities,
