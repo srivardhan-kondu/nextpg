@@ -86,7 +86,9 @@ test.describe('session and guards', () => {
     await signInAs(page, user);
 
     await page.goto('/dashboard');
-    await expect(page.getByRole('heading', { name: /welcome back/i })).toBeVisible();
+    // Greeting copy is a design choice; the credit summary is the page's job.
+    // The label appears in both the sidebar widget and the stat grid.
+    await expect(page.getByText('Credits remaining', { exact: true }).first()).toBeVisible();
 
     const session = await page.request.get('/api/auth/session');
     const body = (await session.json()) as { user: { email: string; role: string } };

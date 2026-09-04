@@ -2,7 +2,7 @@
   "name": "nextpg",
   "version": "1.0.0",
   "private": true,
-  "description": "NextPG — Predict Your Rank. Validate Your Dream. Plan Your PG Journey.",
+  "description": "NextPG \u2014 Predict Your Rank. Validate Your Dream. Plan Your PG Journey.",
   "engines": {
     "node": ">=20.0.0"
   },
@@ -24,7 +24,8 @@
     "db:seed": "tsx prisma/seed.ts",
     "db:reset": "prisma migrate reset --force",
     "import:cutoffs": "tsx scripts/import-cutoffs.ts",
-    "create:admin": "tsx scripts/create-admin.ts"
+    "create:admin": "tsx scripts/create-admin.ts",
+    "extract:pdf": "tsx scripts/extract-pdf.ts"
   },
   "prisma": {
     "seed": "tsx prisma/seed.ts"

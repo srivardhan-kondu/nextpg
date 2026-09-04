@@ -13,7 +13,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   return (
     <div className="app-canvas min-h-dvh">
       {/* Fixed rail on desktop; the same tree is reused inside the mobile sheet. */}
-      <aside className="fixed inset-y-0 left-0 z-40 hidden w-64 border-r border-border bg-background lg:block">
+      <aside className="fixed inset-y-0 left-0 z-40 hidden w-64 border-r border-black/[0.08] bg-[#faf9f6] lg:block">
         {sidebar}
       </aside>
 

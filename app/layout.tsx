@@ -49,7 +49,7 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en-IN" suppressHydrationWarning>
+    <html lang="en-IN" className="light" suppressHydrationWarning>
       <body className={`${inter.variable} font-sans`}>
         <a
           href="#main"

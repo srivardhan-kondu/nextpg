@@ -20,7 +20,7 @@ export function MobileNav({ children }: { children: React.ReactNode }) {
           <Menu className="h-5 w-5" />
         </Button>
       </SheetTrigger>
-      <SheetContent side="left" className="w-72 p-0">
+      <SheetContent side="left" className="w-72 p-0" style={{ background: '#faf9f6' }}>
         <SheetTitle className="sr-only">Navigation</SheetTitle>
         {children}
       </SheetContent>

@@ -1,7 +1,5 @@
 import Link from 'next/link';
-import { Download, FileText, Lock } from 'lucide-react';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
+import { Download, Lock } from 'lucide-react';
 import { formatDate, formatRankRange } from '@/lib/utils';
 import { CATEGORY_LABEL } from '@/lib/constants';
 import type { Category, PredictionStatus } from '@prisma/client';
@@ -18,50 +16,67 @@ export interface PredictionHistoryItem {
   reportId?: string | null;
 }
 
+/** History row — matching design doc 1e prediction history layout */
 export function PredictionHistoryCard({ item }: { item: PredictionHistoryItem }) {
   const unlocked = item.status === 'UNLOCKED';
 
   return (
-    <article className="surface flex flex-col gap-4 p-5 sm:flex-row sm:items-center sm:justify-between">
-      <div className="min-w-0">
-        <div className="flex flex-wrap items-center gap-2">
-          <time dateTime={new Date(item.createdAt).toISOString()} className="text-xs text-muted-foreground">
-            {formatDate(item.createdAt)}
-          </time>
-          {unlocked ? (
-            <Badge variant="strong">Unlocked</Badge>
-          ) : (
-            <Badge variant="secondary">
-              <Lock className="mr-1 h-3 w-3" aria-hidden />
-              Preview
-            </Badge>
-          )}
-        </div>
-
-        <p className="mt-1.5 text-lg font-bold tracking-tight">
-          {formatRankRange(item.rankMin, item.rankMax)}
-        </p>
-        <p className="mt-0.5 text-sm text-muted-foreground">
-          {item.state} · {CATEGORY_LABEL[item.category]} · {item.confidence}% confidence
-        </p>
+    <article className="grid grid-cols-1 items-center gap-5 rounded-[11px] border border-black/[0.10] bg-white p-[20px] sm:grid-cols-[1.1fr_.9fr_.8fr_.8fr_auto]">
+      {/* Date */}
+      <div className="flex flex-col gap-[5px]">
+        <span className="text-[12px] leading-none text-[#6b7472]">Prediction date</span>
+        <time
+          dateTime={new Date(item.createdAt).toISOString()}
+          className="text-[14.5px] leading-none text-[#15191a]"
+        >
+          {formatDate(item.createdAt)}
+        </time>
       </div>
 
-      <div className="flex shrink-0 flex-wrap gap-2">
-        <Button asChild variant="outline" size="sm">
-          <Link href={`/predictor/${item.id}`}>
-            <FileText aria-hidden />
-            View report
-          </Link>
-        </Button>
+      {/* Rank */}
+      <div className="flex flex-col gap-[5px]">
+        <span className="text-[12px] leading-none text-[#6b7472]">Estimated rank</span>
+        <span className="text-[14.5px] leading-none tabular-nums text-[#15191a]">
+          {formatRankRange(item.rankMin, item.rankMax)}
+        </span>
+      </div>
+
+      {/* State */}
+      <div className="flex flex-col gap-[5px]">
+        <span className="text-[12px] leading-none text-[#6b7472]">State</span>
+        <span className="text-[14.5px] leading-none text-[#15191a]">{item.state}</span>
+      </div>
+
+      {/* Category */}
+      <div className="flex flex-col gap-[5px]">
+        <span className="text-[12px] leading-none text-[#6b7472]">Category</span>
+        <span className="text-[14.5px] leading-none text-[#15191a]">
+          {CATEGORY_LABEL[item.category]}
+        </span>
+      </div>
+
+      {/* Action buttons */}
+      <div className="flex shrink-0 gap-[9px]">
+        <Link
+          href={`/predictor/${item.id}`}
+          className="rounded-[8px] border border-black/[0.14] bg-white px-4 py-2.5 text-[13px] font-medium leading-none text-[#15191a] transition-colors hover:bg-[#faf9f6]"
+        >
+          View report
+        </Link>
         {unlocked && item.reportId ? (
-          <Button asChild size="sm">
-            {/* Plain anchor: this streams a PDF, so it must not be intercepted by the router. */}
-            <a href={`/api/reports/${item.reportId}/download`}>
-              <Download aria-hidden />
-              Download PDF
-            </a>
-          </Button>
-        ) : null}
+          <a
+            href={`/api/reports/${item.reportId}/download`}
+            className="flex items-center gap-1.5 rounded-[8px] border border-[#cfdedb] bg-[#f4f7f6] px-4 py-2.5 text-[13px] font-medium leading-none text-[#0b544e] transition-colors hover:bg-[#e8f1ef]"
+          >
+            <Download className="h-3.5 w-3.5" aria-hidden />
+            Download PDF
+          </a>
+        ) : (
+          <span className="flex items-center gap-1 rounded-[8px] border border-black/[0.10] bg-[#faf9f6] px-3 py-2.5 text-[12px] leading-none text-[#6b7472]">
+            <Lock className="h-3 w-3" aria-hidden />
+            Preview
+          </span>
+        )}
       </div>
     </article>
   );

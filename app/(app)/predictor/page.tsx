@@ -1,15 +1,11 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
-import { History } from 'lucide-react';
 
 import { requireUser } from '@/lib/auth/guards';
 import { prisma } from '@/lib/prisma';
 import { predictionRepository } from '@/repositories/prediction.repository';
 import { MainTabs } from '@/components/shared/main-tabs';
-import { PageHeader } from '@/features/dashboard/components/page-header';
 import { PredictionForm } from '@/features/predictor/components/prediction-form';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
 import { formatDate, formatRankRange } from '@/lib/utils';
 
 export const metadata: Metadata = {
@@ -29,15 +25,24 @@ export default async function PredictorPage() {
   ]);
 
   return (
-    <div className="space-y-6">
-      <PageHeader
-        title="Rank & College Predictor"
-        description="Enter your details and expected performance. We estimate your rank and match it against historical closing ranks."
-      />
+    <div className="space-y-0">
+      {/* Tab strip — matching design doc 1b */}
+      <div className="border-b border-black/[0.08]">
+        <MainTabs />
+      </div>
 
-      <MainTabs />
+      {/* Form panel */}
+      <div className="px-0 py-[44px] sm:px-0 lg:px-0">
+        {/* Section header */}
+        <div className="mb-8 flex flex-col gap-1.5">
+          <h1 className="text-[27px] font-normal leading-[1.2] tracking-[-0.02em] text-[#15191a]">
+            Let&apos;s estimate your rank
+          </h1>
+          <p className="text-[14.5px] leading-[1.55] text-[#6b7472]">
+            Rough answers are fine — we&apos;ll show you a range, not a false promise.
+          </p>
+        </div>
 
-      <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_20rem]">
         <PredictionForm
           defaults={{
             candidateName: profile?.name ?? '',
@@ -48,57 +53,38 @@ export default async function PredictorPage() {
           }}
         />
 
-        <aside className="space-y-4">
-          <Card>
-            <CardContent className="p-5">
-              <h2 className="flex items-center gap-2 text-sm font-semibold">
-                <History className="h-4 w-4 text-primary" aria-hidden />
-                Recent predictions
-              </h2>
-
-              {recent.items.length === 0 ? (
-                <p className="mt-2.5 text-sm text-muted-foreground">
-                  Your predictions will appear here once you run one.
-                </p>
-              ) : (
-                <ul className="mt-3 space-y-2.5">
-                  {recent.items.map((item) => (
-                    <li key={item.id}>
-                      <Link
-                        href={`/predictor/${item.id}`}
-                        className="block rounded-lg border border-border p-3 transition-colors hover:bg-muted"
-                      >
-                        <p className="text-sm font-semibold">{formatRankRange(item.rankMin, item.rankMax)}</p>
-                        <p className="mt-0.5 text-xs text-muted-foreground">
-                          {formatDate(item.createdAt)} · {item.status === 'UNLOCKED' ? 'Unlocked' : 'Preview'}
-                        </p>
-                      </Link>
-                    </li>
-                  ))}
-                </ul>
+        {/* Recent predictions — compact list below form */}
+        {recent.items.length > 0 && (
+          <div className="mt-10 border-t border-black/[0.08] pt-8">
+            <div className="mb-4 flex items-baseline justify-between">
+              <span className="text-[14px] font-medium text-[#15191a]">Recent predictions</span>
+              {recent.total > recent.items.length && (
+                <Link href="/reports" className="text-[13px] text-primary hover:opacity-80">
+                  View all {recent.total}
+                </Link>
               )}
-
-              {recent.total > recent.items.length ? (
-                <Button asChild variant="ghost" size="sm" className="mt-3 w-full">
-                  <Link href="/reports">View all {recent.total}</Link>
-                </Button>
-              ) : null}
-            </CardContent>
-          </Card>
-
-          <Card className="bg-muted/40">
-            <CardContent className="p-5 text-sm">
-              <h2 className="font-semibold">How the estimate works</h2>
-              <ul className="mt-2.5 space-y-2 text-muted-foreground">
-                <li>Your score is mapped to a rank using published score-vs-rank data.</li>
-                <li>That point estimate is widened into a range — the honest output.</li>
-                <li>
-                  Every college shown is backed by a real historical closing rank. We never invent cutoffs.
-                </li>
-              </ul>
-            </CardContent>
-          </Card>
-        </aside>
+            </div>
+            <div className="flex flex-col gap-3">
+              {recent.items.map((item) => (
+                <Link
+                  key={item.id}
+                  href={`/predictor/${item.id}`}
+                  className="flex items-center justify-between rounded-[9px] border border-black/[0.08] bg-[#faf9f6] px-4 py-3 transition-colors hover:bg-[#f0f0ec]"
+                >
+                  <div className="flex flex-col gap-1">
+                    <span className="text-[14px] font-medium tabular-nums text-[#15191a]">
+                      {formatRankRange(item.rankMin, item.rankMax)}
+                    </span>
+                    <span className="text-[12px] text-[#6b7472]">
+                      {formatDate(item.createdAt)} · {item.status === 'UNLOCKED' ? 'Unlocked' : 'Preview'}
+                    </span>
+                  </div>
+                  <span className="text-[12px] text-primary">View →</span>
+                </Link>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

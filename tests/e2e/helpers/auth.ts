@@ -49,7 +49,13 @@ export async function signInAs(page: Page, user: Pick<User, 'id' | 'email' | 'na
   ]);
 }
 
-/** Fills and submits the three-step prediction wizard. */
+/**
+ * Fills and submits the prediction form.
+ *
+ * The form is a single page: name, gender, state, category, marks and college
+ * preference all submit together. Gender and preference are chip buttons rather
+ * than native radios, so they are clicked by their visible text.
+ */
 export async function runPrediction(
   page: Page,
   overrides: { correct?: number; wrong?: number; state?: string } = {},
@@ -57,51 +63,26 @@ export async function runPrediction(
   const { correct = 120, wrong = 40, state = 'Telangana' } = overrides;
 
   await page.goto('/predictor');
-  await expect(page.getByText(/Step 1 of 3/)).toBeVisible();
 
-  // Step 1 — profile. The name must be letters only; the validator rejects
-  // digits, so an "E2E"-style name would fail the form.
+  // The name validator rejects digits, so an "E2E"-style name would fail.
   await page.getByLabel('Full name').fill('Aditi Sharma');
-  // The Radix radio itself is sr-only and the styled <label> sits on top of it,
-  // so the label is both what a real user clicks and the only clickable target.
-  await page.locator('label[for="gender-FEMALE"]').click();
-  await expect(page.locator('#gender-FEMALE')).toHaveAttribute('data-state', 'checked');
+  await page.getByRole('button', { name: 'Female', exact: true }).click();
 
-  await page.getByRole('combobox', { name: /domicile state/i }).click();
+  await page.getByRole('combobox', { name: /^state$/i }).click();
   await page.getByRole('option', { name: state, exact: true }).click();
+
   await page.getByRole('combobox', { name: /^category$/i }).click();
   await page.getByRole('option', { name: 'General', exact: true }).click();
 
-  await advanceStep(page, 2);
+  await page.getByLabel('Correct answers').or(page.getByLabel('Correct questions')).fill(String(correct));
+  await page.getByLabel('Wrong answers').or(page.getByLabel('Wrong questions')).fill(String(wrong));
 
-  // Step 2 — exam performance
-  await page.getByLabel('Correct questions').fill(String(correct));
-  await page.getByLabel('Wrong questions').fill(String(wrong));
-
-  await advanceStep(page, 3);
-
-  // Step 3 — preference already defaults to "Any", so just submit.
   const submit = page.getByRole('button', { name: /predict my rank/i });
   await expect(submit).toBeEnabled();
   // noWaitAfter: the button disables itself on click and the page then
-  // navigates, so Playwright's post-click actionability re-check would wait
-  // forever for it to become enabled again.
+  // navigates, so the post-click actionability re-check would never settle.
   await submit.click({ noWaitAfter: true });
 
   await page.waitForURL(/\/predictor\/[a-z0-9]+/, { timeout: 60_000 });
   return page.url().split('/').pop()!;
-}
-
-/**
- * Clicks Continue and waits for the wizard to actually advance.
- *
- * The step buttons swap in place: Continue on steps 1-2 is replaced by the
- * submit button on step 3, at the same position in the DOM. Without
- * noWaitAfter, Playwright sees the clicked element detach, retries the click,
- * and the retry lands on whatever now occupies that spot — submitting the form
- * a step early. Asserting the step indicator makes each transition explicit.
- */
-async function advanceStep(page: Page, expected: 2 | 3) {
-  await page.getByRole('button', { name: /^continue$/i }).click({ noWaitAfter: true });
-  await expect(page.getByText(new RegExp(`Step ${expected} of 3`))).toBeVisible();
 }

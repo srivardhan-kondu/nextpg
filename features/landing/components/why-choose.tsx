@@ -1,30 +1,21 @@
-import { BadgeIndianRupee, Database, ShieldCheck, Timer } from 'lucide-react';
-import { pricing } from '@/config/site';
-
-const reasons = [
-  { icon: Database, title: 'Data-Driven Insights', body: 'Based on past trends and counseling data' },
-  { icon: Timer, title: 'Simple & Fast', body: 'Get results in minutes' },
-  { icon: BadgeIndianRupee, title: 'Affordable', body: `Just ${pricing.amountLabel} for ${pricing.credits} predictions` },
-  { icon: ShieldCheck, title: 'Trusted', body: 'Designed for PG aspirants' },
+/** Trust strip — 4-stat row matching design doc 1a trust strip */
+const stats = [
+  { value: '1,840+', label: 'Colleges tracked' },
+  { value: '20', label: 'Branches validated' },
+  { value: '4 yrs', label: 'Closing-rank history' },
+  { value: 'AIQ + 28', label: 'State quota rule sets' },
 ];
 
-export function WhyChoose({ brand }: { brand: string }) {
+export function WhyChoose({ brand: _ }: { brand: string }) {
   return (
-    <section id="how-it-works" className="border-b border-border/60 bg-background py-16">
-      <div className="container">
-        <h2 className="text-center text-2xl font-bold tracking-tight sm:text-3xl">Why Choose {brand}?</h2>
-
-        <div className="mt-10 grid gap-8 sm:grid-cols-2 lg:grid-cols-4">
-          {reasons.map((r) => (
-            <div key={r.title}>
-              <div className="grid h-11 w-11 place-items-center rounded-xl border border-border bg-card shadow-card">
-                <r.icon className="h-5 w-5 text-primary" aria-hidden />
-              </div>
-              <h3 className="mt-4 text-base font-semibold">{r.title}</h3>
-              <p className="mt-1 text-sm leading-relaxed text-muted-foreground">{r.body}</p>
-            </div>
-          ))}
-        </div>
+    <section className="border-b border-black/[0.08] bg-white">
+      <div className="mx-auto grid max-w-[1440px] grid-cols-2 gap-6 px-10 py-[26px] sm:grid-cols-4">
+        {stats.map((s) => (
+          <div key={s.label} className="flex flex-col gap-[5px]">
+            <span className="text-[22px] leading-none tabular-nums text-[#15191a]">{s.value}</span>
+            <span className="text-[12.5px] leading-none text-[#6b7472]">{s.label}</span>
+          </div>
+        ))}
       </div>
     </section>
   );

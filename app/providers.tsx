@@ -8,7 +8,7 @@ import { Toaster } from 'sonner';
 export function Providers({ children }: { children: React.ReactNode }) {
   return (
     <SessionProvider>
-      <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
+      <ThemeProvider attribute="class" defaultTheme="light" enableSystem={false} disableTransitionOnChange>
         <TooltipProvider delayDuration={200}>
           {children}
           <Toaster position="top-center" richColors closeButton />

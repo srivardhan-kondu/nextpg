@@ -4,106 +4,120 @@
 
 @layer base {
   :root {
-    --background: 0 0% 100%;
-    --foreground: 222 47% 11%;
-    --canvas: 214 45% 98%;
+    /* ── Page canvas — warm sand #efeeea ── */
+    --background: 40 12% 91%;
+    --foreground: 192 10% 10%;
 
+    /* ── Surface white — pure white for cards ── */
+    --canvas: 40 20% 97%;
     --card: 0 0% 100%;
-    --card-foreground: 222 47% 11%;
+    --card-foreground: 192 10% 10%;
     --popover: 0 0% 100%;
-    --popover-foreground: 222 47% 11%;
+    --popover-foreground: 192 10% 10%;
 
-    --primary: 221 83% 53%;
+    /* ── Primary — warm teal #10736b ── */
+    --primary: 174 76% 25%;
     --primary-foreground: 0 0% 100%;
-    --primary-soft: 219 100% 96%;
+    --primary-soft: 168 40% 93%;
 
-    --secondary: 214 40% 96%;
-    --secondary-foreground: 222 47% 11%;
+    /* ── Secondary / muted ── */
+    --secondary: 168 18% 95%;
+    --secondary-foreground: 192 10% 10%;
+    --muted: 168 18% 93%;
+    --muted-foreground: 170 6% 43%;
 
-    --muted: 214 40% 96%;
-    --muted-foreground: 215 16% 47%;
-
-    --accent: 219 100% 96%;
-    --accent-foreground: 221 83% 45%;
+    --accent: 168 40% 93%;
+    --accent-foreground: 174 76% 18%;
 
     --destructive: 0 72% 51%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 214 32% 91%;
-    --input: 214 32% 91%;
-    --ring: 221 83% 53%;
+    --border: 192 10% 88%;
+    --input: 0 0% 100%;
+    --ring: 174 76% 25%;
 
-    --strong: 142 71% 36%;
-    --strong-soft: 141 79% 95%;
-    --moderate: 38 92% 50%;
-    --moderate-soft: 48 96% 93%;
-    --stretch: 0 72% 51%;
-    --stretch-soft: 0 86% 97%;
+    /* ── Likelihood bands ── */
+    --strong: 174 76% 25%;
+    --strong-soft: 168 40% 93%;
+    --moderate: 37 68% 38%;
+    --moderate-soft: 44 80% 93%;
+    --stretch: 16 59% 34%;
+    --stretch-soft: 20 50% 93%;
 
     --radius: 0.625rem;
   }
 
-  .dark {
-    --background: 222 47% 8%;
-    --foreground: 210 40% 98%;
-    --canvas: 222 47% 6%;
+  /* Strip dark mode — this design is intentionally light-only */
+  * { @apply border-border; }
 
-    --card: 222 44% 11%;
-    --card-foreground: 210 40% 98%;
-    --popover: 222 44% 11%;
-    --popover-foreground: 210 40% 98%;
-
-    --primary: 217 91% 60%;
-    --primary-foreground: 222 47% 8%;
-    --primary-soft: 221 60% 18%;
-
-    --secondary: 217 33% 17%;
-    --secondary-foreground: 210 40% 98%;
-
-    --muted: 217 33% 17%;
-    --muted-foreground: 215 20% 65%;
-
-    --accent: 221 60% 18%;
-    --accent-foreground: 213 94% 78%;
-
-    --destructive: 0 63% 45%;
-    --destructive-foreground: 210 40% 98%;
-
-    --border: 217 33% 20%;
-    --input: 217 33% 20%;
-    --ring: 217 91% 60%;
-
-    --strong: 142 69% 45%;
-    --strong-soft: 143 55% 14%;
-    --moderate: 38 92% 55%;
-    --moderate-soft: 33 60% 15%;
-    --stretch: 0 72% 58%;
-    --stretch-soft: 0 50% 16%;
+  html {
+    color-scheme: light;
+    -webkit-tap-highlight-color: transparent;
   }
 
-  * { @apply border-border; }
-  html { -webkit-tap-highlight-color: transparent; }
   body {
     @apply bg-background text-foreground antialiased;
-    font-feature-settings: 'cv11', 'ss01';
+    font-family: 'Inter', 'Helvetica Neue', Helvetica, Arial, -apple-system, sans-serif;
     text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
   }
-  /* Visible focus for keyboard users only — WCAG 2.4.7 */
+
   :focus-visible { @apply outline-none ring-2 ring-ring ring-offset-2 ring-offset-background; }
-  /* Links cannot be `disabled`, so pagination marks them aria-disabled instead.
-     This gives them the matching look and makes them genuinely unclickable. */
   a[aria-disabled='true'] { @apply pointer-events-none opacity-50; }
 }
 
 @layer components {
-  .app-canvas { @apply bg-canvas; }
-  .surface { @apply rounded-xl border border-border bg-card shadow-card; }
-  .stat-tile { @apply rounded-xl border border-border bg-card px-5 py-4 shadow-card; }
-  .hero-gradient {
-    background:
-      radial-gradient(1100px 460px at 78% -8%, hsl(var(--primary) / 0.10), transparent 62%),
-      linear-gradient(180deg, hsl(var(--primary-soft) / 0.55) 0%, hsl(var(--background)) 74%);
+  /* ── App canvas — warm sand background ── */
+  .app-canvas { background: #efeeea; }
+
+  /* ── White card surface ── */
+  .surface {
+    @apply rounded-xl bg-white;
+    border: 1px solid rgba(21, 25, 26, 0.10);
+    box-shadow: 0 1px 3px rgba(21, 25, 26, 0.06);
   }
+
+  /* ── Stat tile — warm off-white ── */
+  .stat-tile {
+    background: #faf9f6;
+    border: 1px solid rgba(21, 25, 26, 0.08);
+    border-radius: 10px;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 7px;
+  }
+
+  /* ── Hero section bg ── */
+  .hero-gradient { background: #faf9f6; }
+
+  /* ── Toggle chip buttons ── */
+  .chip-active {
+    background: #e8f1ef;
+    border: 1px solid #10736b;
+    color: #0b544e;
+  }
+  .chip-idle {
+    background: #fff;
+    border: 1px solid rgba(21, 25, 26, 0.16);
+    color: #4e5654;
+  }
+}
+
+/* ── Premium override for Radix/shadcn Card inside app pages ── */
+[class*="bg-card"],
+.bg-card {
+  background: #ffffff !important;
+}
+
+[class*="bg-background"]:not(body):not(html) {
+  background: #ffffff !important;
+}
+
+/* ── Sonner toast warm theme ── */
+[data-sonner-toaster] {
+  font-family: inherit !important;
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -115,7 +129,6 @@
   }
 }
 
-/* Print styles — the report page stays usable if a user prints instead of downloading. */
 @media print {
   .no-print { display: none !important; }
   body { background: #fff; }

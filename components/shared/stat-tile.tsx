@@ -9,20 +9,25 @@ interface StatTileProps {
 }
 
 const toneClass = {
-  default: 'text-foreground',
+  default: 'text-[#15191a]',
   primary: 'text-primary',
-  strong: 'text-strong',
-  moderate: 'text-moderate',
-  stretch: 'text-stretch',
+  strong: 'text-[#0f766e]',
+  moderate: 'text-[#a07520]',
+  stretch: 'text-[#8a4a22]',
 } as const;
 
-/** The metric cards across the results and dashboard screens. */
+/** Metric cards — matching design doc 1e 4-stat grid style */
 export function StatTile({ label, value, hint, tone = 'default', className }: StatTileProps) {
   return (
-    <div className={cn('stat-tile', className)}>
-      <p className="text-xs font-medium text-muted-foreground">{label}</p>
-      <p className={cn('mt-1.5 text-2xl font-bold leading-tight tracking-tight', toneClass[tone])}>{value}</p>
-      {hint ? <p className="mt-1 text-xs text-muted-foreground">{hint}</p> : null}
+    <div
+      className={cn(
+        'flex flex-col gap-[7px] rounded-[10px] border border-black/[0.08] bg-[#faf9f6] px-5 py-5',
+        className,
+      )}
+    >
+      <p className="text-[12.5px] leading-none text-[#6b7472]">{label}</p>
+      <p className={cn('text-[26px] leading-none tabular-nums', toneClass[tone])}>{value}</p>
+      {hint ? <p className="text-[12px] leading-relaxed text-[#6b7472]">{hint}</p> : null}
     </div>
   );
 }

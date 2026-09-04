@@ -1,52 +1,81 @@
 import Link from 'next/link';
-import { Check } from 'lucide-react';
-import { Button } from '@/components/ui/button';
 import { pricing } from '@/config/site';
 
 const included = [
-  'Rank Prediction',
-  'Branch Analysis',
-  'College Analysis',
-  'AIQ Analysis',
-  'State Quota Analysis',
-  'Dream Branch Validation',
-  'Dream College Validation',
-  'Downloadable PDF Report',
+  'Rank prediction & confidence band',
+  'Branch & college analysis',
+  'AIQ + state quota breakdown',
+  'Dream branch & college validation',
+  'Downloadable PDF report',
 ];
 
+const bullets = [
+  'Reports stay in your account forever',
+  'Credits never expire',
+  'Pay once, re-run as your score sharpens',
+];
+
+/** Pricing section — 2-column layout matching design doc 1a pricing block */
 export function PricingSection() {
   return (
-    <section id="pricing" className="border-b border-border/60 bg-background py-16">
-      <div className="container max-w-3xl text-center">
-        <h2 className="text-2xl font-bold tracking-tight sm:text-3xl">Simple, one-time pricing</h2>
-        <p className="mt-3 text-sm text-muted-foreground">
-          No subscriptions. Buy credits once and use them whenever you like — your reports stay accessible forever.
-        </p>
+    <section
+      id="pricing"
+      className="border-b border-black/[0.08] bg-[#faf9f6] px-10 py-[66px]"
+    >
+      <div className="mx-auto grid max-w-[1440px] grid-cols-1 items-center gap-16 lg:grid-cols-[1fr_420px]">
+        {/* Left — copy */}
+        <div className="flex flex-col gap-3.5">
+          <h2 className="m-0 text-[32px] font-normal leading-[1.15] tracking-[-0.02em] text-[#15191a]">
+            No subscription. Just credits.
+          </h2>
+          <p className="m-0 max-w-[48ch] text-[15.5px] leading-[1.55] text-[#4e5654]">
+            One credit generates a full report — rank analysis, AIQ and state quota opportunities,
+            dream validation and a PDF. Reopening old reports is always free.
+          </p>
+          <ul className="mt-2 flex flex-col gap-2.5">
+            {bullets.map((b) => (
+              <li key={b} className="flex items-center gap-2.5">
+                <span className="h-[5px] w-[5px] shrink-0 rounded-full bg-primary" aria-hidden />
+                <span className="text-[14.5px] leading-none text-[#4e5654]">{b}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
 
-        <div className="mt-10 rounded-2xl border border-primary/25 bg-card p-8 text-left shadow-lift">
-          <div className="flex flex-wrap items-end justify-between gap-4">
-            <div>
-              <p className="text-sm font-medium text-primary">{pricing.packName}</p>
-              <p className="mt-1 text-4xl font-bold tracking-tight">{pricing.amountLabel}</p>
-              <p className="mt-1 text-sm text-muted-foreground">
-                One credit generates one complete report.
-              </p>
-            </div>
-            <Button asChild size="xl">
-              <Link href="/credits">Get {pricing.credits} Prediction Credits</Link>
-            </Button>
+        {/* Right — pricing card */}
+        <div className="flex flex-col gap-5 rounded-[12px] border border-black/[0.12] bg-white p-[30px] shadow-[0_4px_20px_rgba(21,25,26,.06)]">
+          <span className="text-[12px] font-medium leading-none tracking-[.09em] uppercase text-[#6b7472]">
+            Prediction credits
+          </span>
+          <div className="flex items-baseline gap-2">
+            <span className="text-[48px] leading-none tracking-[-0.03em] text-[#15191a]">
+              {pricing.amountLabel}
+            </span>
+            <span className="text-[14.5px] leading-none text-[#6b7472]">
+              for {pricing.credits} credits
+            </span>
           </div>
 
-          <ul className="mt-8 grid gap-3 sm:grid-cols-2">
+          <div className="h-px bg-black/[0.08]" />
+
+          <ul className="flex flex-col gap-2.5">
             {included.map((item) => (
-              <li key={item} className="flex items-center gap-2.5 text-sm">
-                <span className="grid h-5 w-5 shrink-0 place-items-center rounded-full bg-strong-soft">
-                  <Check className="h-3 w-3 text-strong" aria-hidden />
-                </span>
+              <li key={item} className="text-[14px] leading-relaxed text-[#4e5654]">
                 {item}
               </li>
             ))}
           </ul>
+
+          <Link
+            href="/credits"
+            className="block rounded-[9px] bg-primary py-[15px] text-center text-[15px] font-medium leading-none text-white transition-opacity hover:opacity-90"
+          >
+            Get {pricing.credits} prediction credits
+          </Link>
+
+          <p className="text-center text-[12px] leading-relaxed text-[#6b7472]">
+            Secure payment via Razorpay · UPI, cards, netbanking
+          </p>
         </div>
       </div>
     </section>

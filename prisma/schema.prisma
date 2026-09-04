@@ -102,6 +102,21 @@ enum ReportStatus {
   FAILED
 }
 
+enum ExtractionStatus {
+  PENDING
+  PROCESSING
+  REVIEW // extraction finished; rows await human approval
+  COMPLETED
+  FAILED
+}
+
+enum ExtractedRowStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  IMPORTED
+}
+
 // ─────────────────────────── Auth / users ───────────────────────────
 
 model User {
@@ -136,6 +151,7 @@ model User {
   auditLogs        AuditLog[]
   adminProfile     AdminUser?
   assistantThreads AssistantThread[]
+  extractionJobs   ExtractionJob[]
 
   @@index([role])
   @@index([createdAt])
@@ -413,6 +429,7 @@ model College {
   cutoffs          HistoricalCutoff[]
   seats            CollegeSeat[]
   dreamValidations DreamValidation[]
+  extractedCutoffs ExtractedCutoff[]
 
   @@index([state])
   @@index([type])
@@ -434,8 +451,9 @@ model Branch {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  cutoffs HistoricalCutoff[]
-  seats   CollegeSeat[]
+  cutoffs          HistoricalCutoff[]
+  seats            CollegeSeat[]
+  extractedCutoffs ExtractedCutoff[]
 
   @@index([popularity])
   @@map("branch_database")
@@ -545,6 +563,116 @@ model AssistantMessage {
 
   @@index([threadId, createdAt])
   @@map("assistant_messages")
+}
+
+// ─────────────────────────── Data import ───────────────────────────
+
+/**
+ * One ingested counselling PDF.
+ *
+ * Extraction never writes to historical_cutoffs. Rows land in extracted_cutoffs
+ * first and a human promotes them, because an OCR/vision misread that reaches
+ * the prediction engine is indistinguishable from a real cutoff.
+ */
+model ExtractionJob {
+  id     String  @id @default(cuid())
+  userId String?
+
+  fileName String
+  fileHash String // sha256 of the source PDF — re-uploading the same file is caught
+  fileSize Int
+  pageCount Int   @default(0)
+
+  // Provenance, carried onto every row promoted from this job.
+  sourceLabel  String // "MCC 2024 Round 1"
+  academicYear Int
+  defaultQuota QuotaType?
+
+  status ExtractionStatus @default(PENDING)
+
+  model         String @default("gpt-4o")
+  promptVersion String @default("v1")
+
+  pagesProcessed Int @default(0)
+  totalRows      Int @default(0)
+  flaggedRows    Int @default(0)
+  approvedRows   Int @default(0)
+  rejectedRows   Int @default(0)
+  importedRows   Int @default(0)
+
+  /** Cumulative OpenAI usage, so per-document cost is visible. */
+  promptTokens     Int @default(0)
+  completionTokens Int @default(0)
+
+  error       String?   @db.Text
+  startedAt   DateTime?
+  completedAt DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user User?             @relation(fields: [userId], references: [id], onDelete: SetNull)
+  rows ExtractedCutoff[]
+
+  @@index([status, createdAt])
+  @@index([fileHash])
+  @@map("extraction_jobs")
+}
+
+/**
+ * A single candidate cutoff row read out of a PDF page.
+ *
+ * `rawText` is the verbatim cell content the model reports having read. It is
+ * the audit trail: a reviewer can compare it against the page without trusting
+ * the parsed fields.
+ */
+model ExtractedCutoff {
+  id    String @id @default(cuid())
+  jobId String
+
+  pageNumber Int
+  rowIndex   Int
+  rawText    String @db.Text
+
+  // As read from the document, before any matching or normalisation.
+  rawCollegeName String
+  rawBranchName  String
+  rawQuota       String?
+  rawCategory    String?
+
+  // Resolved against our reference tables; null means no confident match.
+  collegeId String?
+  branchId  String?
+
+  quota        QuotaType?
+  category     Category?
+  subCategory  SubCategory  @default(NONE)
+  closingRank  Int?
+  openingRank  Int?
+  seatCount    Int?
+  round        Int?
+  academicYear Int?
+
+  /** 0-100. Below the review threshold the row cannot be auto-approved. */
+  confidence Int      @default(0)
+  /** Machine-readable validation problems, e.g. "unmatched_college". */
+  issues     String[] @default([])
+
+  status     ExtractedRowStatus @default(PENDING)
+  reviewedBy String?
+  reviewedAt DateTime?
+  reviewNote String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  job     ExtractionJob @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  college College?      @relation(fields: [collegeId], references: [id], onDelete: SetNull)
+  branch  Branch?       @relation(fields: [branchId], references: [id], onDelete: SetNull)
+
+  @@index([jobId, status])
+  @@index([status, confidence])
+  @@map("extracted_cutoffs")
 }
 
 // ─────────────────────────── Ops ───────────────────────────

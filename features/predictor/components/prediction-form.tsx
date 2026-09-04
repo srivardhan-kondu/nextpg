@@ -3,20 +3,10 @@
 import * as React from 'react';
 import { useRouter } from 'next/navigation';
 import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
+import { zodResolver } from '@hookform/resolvers/zod'
 import { toast } from 'sonner';
-import { ArrowLeft, ArrowRight, Calculator, Sparkles } from 'lucide-react';
+import { Sparkles } from 'lucide-react';
 
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Progress } from '@/components/ui/progress';
-import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import {
-  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
-} from '@/components/ui/select';
-import { Card, CardContent } from '@/components/ui/card';
-import { Disclaimer } from '@/components/shared/disclaimer';
 import { createPredictionAction } from '@/actions/prediction.actions';
 import { createPredictionSchema, type CreatePredictionInput } from '@/validators/prediction.schema';
 import {
@@ -25,39 +15,167 @@ import {
 import { EXAM } from '@/config/site';
 import { computeScore } from '@/services/prediction/scoring';
 import { cn } from '@/lib/utils';
+import {
+  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
+} from '@/components/ui/select';
 
 interface PredictionFormProps {
   defaults?: Partial<CreatePredictionInput>;
 }
 
-const STEPS = [
-  { id: 1, title: 'Your details', hint: 'Who is this prediction for?' },
-  { id: 2, title: 'Exam performance', hint: 'How did the paper go?' },
-  { id: 3, title: 'Preferences', hint: 'What are you looking for?' },
-] as const;
-
-/** Which fields must be valid before the wizard advances past each step. */
-const STEP_FIELDS: Record<number, (keyof CreatePredictionInput)[]> = {
-  1: ['candidateName', 'gender', 'state', 'category', 'subCategory'],
-  2: ['correctAnswers', 'wrongAnswers', 'expectedScore'],
-  3: ['preferredType'],
-};
-
 function FieldError({ message, id }: { message?: string; id: string }) {
   if (!message) return null;
   return (
-    <p id={id} role="alert" className="text-sm text-destructive">
+    <p id={id} role="alert" className="text-[12px] text-red-600 mt-1">
       {message}
     </p>
   );
 }
 
+/** Label chip for gender / college-type toggle buttons */
+function ToggleChip({
+  active,
+  onClick,
+  children,
+}: {
+  active: boolean;
+  onClick: () => void;
+  children: React.ReactNode;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={cn(
+        'flex h-[44px] flex-1 items-center justify-center rounded-[8px] border text-[13.5px] leading-none transition-colors',
+        active
+          ? 'border-primary bg-[#e8f1ef] font-medium text-[#0b544e]'
+          : 'border-black/[0.16] bg-white font-normal text-[#4e5654] hover:bg-[#faf9f6]',
+      )}
+    >
+      {children}
+    </button>
+  );
+}
+
+/** Pill chips for single-select options (college type) */
+function PillChip({
+  active,
+  onClick,
+  children,
+}: {
+  active: boolean;
+  onClick: () => void;
+  children: React.ReactNode;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={cn(
+        'rounded-full border px-5 py-[11px] text-[13.5px] leading-none transition-colors',
+        active
+          ? 'border-primary bg-[#e8f1ef] font-medium text-[#0b544e]'
+          : 'border-black/[0.16] bg-white font-normal text-[#4e5654] hover:bg-[#faf9f6]',
+      )}
+    >
+      {children}
+    </button>
+  );
+}
+
+/** Styled text input matching design doc */
+function StyledInput({
+  id,
+  type = 'text',
+  value,
+  onChange,
+  placeholder,
+  readOnly,
+  suffix,
+  'aria-invalid': ariaInvalid,
+  'aria-describedby': ariaDescribedby,
+}: {
+  id: string;
+  type?: string;
+  value?: string | number;
+  onChange?: React.ChangeEventHandler<HTMLInputElement>;
+  placeholder?: string;
+  readOnly?: boolean;
+  suffix?: React.ReactNode;
+  'aria-invalid'?: boolean;
+  'aria-describedby'?: string;
+}) {
+  return (
+    <div
+      className={cn(
+        'flex h-[44px] items-center rounded-[8px] border px-[14px]',
+        readOnly
+          ? 'border-[#cfdedb] bg-[#f4f7f6]'
+          : 'border-black/[0.16] bg-white',
+        ariaInvalid && 'border-red-400',
+      )}
+    >
+      <input
+        id={id}
+        type={type}
+        value={value}
+        onChange={onChange}
+        placeholder={placeholder}
+        readOnly={readOnly}
+        aria-invalid={ariaInvalid}
+        aria-describedby={ariaDescribedby}
+        className="w-full bg-transparent text-[14.5px] leading-none text-[#15191a] tabular-nums placeholder:text-[#838c8a] focus:outline-none"
+      />
+      {suffix && (
+        <span className="ml-2 shrink-0 text-[11.5px] leading-none text-[#0b544e]">{suffix}</span>
+      )}
+    </div>
+  );
+}
+
+/** Styled select matching design doc */
+function StyledSelect({
+  id,
+  value,
+  onValueChange,
+  placeholder,
+  options,
+  'aria-invalid': ariaInvalid,
+}: {
+  id: string;
+  value?: string;
+  onValueChange: (v: string) => void;
+  placeholder: string;
+  options: { value: string; label: string }[];
+  'aria-invalid'?: boolean;
+}) {
+  return (
+    <Select value={value} onValueChange={onValueChange}>
+      <SelectTrigger
+        id={id}
+        aria-invalid={ariaInvalid}
+        className={cn(
+          'h-[44px] rounded-[8px] border border-black/[0.16] bg-white px-[14px] text-[14.5px] text-[#15191a] focus:ring-1 focus:ring-primary',
+          ariaInvalid && 'border-red-400',
+        )}
+      >
+        <SelectValue placeholder={placeholder} />
+      </SelectTrigger>
+      <SelectContent>
+        {options.map((opt) => (
+          <SelectItem key={opt.value} value={opt.value}>
+            {opt.label}
+          </SelectItem>
+        ))}
+      </SelectContent>
+    </Select>
+  );
+}
+
 export function PredictionForm({ defaults }: PredictionFormProps) {
   const router = useRouter();
-  const [step, setStep] = React.useState(1);
   const [submitting, setSubmitting] = React.useState(false);
-  // True until the user types in the score box; keeps the auto-calculation from
-  // stomping on a deliberate manual override.
   const [scoreAuto, setScoreAuto] = React.useState(true);
 
   const form = useForm<CreatePredictionInput>({
@@ -76,11 +194,13 @@ export function PredictionForm({ defaults }: PredictionFormProps) {
     },
   });
 
-  const { register, watch, setValue, formState, trigger, handleSubmit } = form;
+  const { watch, setValue, formState, handleSubmit } = form;
   const errors = formState.errors;
 
   const correct = watch('correctAnswers');
   const wrong = watch('wrongAnswers');
+  const gender = watch('gender');
+  const preferredType = watch('preferredType');
 
   // Keep the score in sync with attempts until the user takes it over.
   React.useEffect(() => {
@@ -92,33 +212,17 @@ export function PredictionForm({ defaults }: PredictionFormProps) {
     }
   }, [correct, wrong, scoreAuto, setValue]);
 
-  async function next() {
-    const valid = await trigger(STEP_FIELDS[step] ?? []);
-    if (valid) setStep((s) => Math.min(3, s + 1));
-  }
-
   async function onSubmit(values: CreatePredictionInput) {
-    // Blocks a stray Enter keypress on an earlier step from submitting a
-    // half-filled form. The click path cannot reach here early — see the
-    // footer button below.
-    if (step < STEPS.length) return;
-
     setSubmitting(true);
-
     const formData = new FormData();
     for (const [key, value] of Object.entries(values)) {
       if (value !== undefined && value !== null) formData.append(key, String(value));
     }
-
     const result = await createPredictionAction({ status: 'idle' }, formData);
-
     if (result.status === 'success') {
-      // Do not clear `submitting` — the route change unmounts this form, and
-      // resetting first would flash an enabled button mid-navigation.
       router.push(`/predictor/${result.predictionId}`);
       return;
     }
-
     setSubmitting(false);
     if (result.status === 'error') {
       toast.error(result.message);
@@ -131,259 +235,261 @@ export function PredictionForm({ defaults }: PredictionFormProps) {
   }
 
   const attempted = (Number(correct) || 0) + (Number(wrong) || 0);
-  const unattempted = Math.max(0, EXAM.totalQuestions - attempted);
-  const activeStep = STEPS[step - 1]!;
+  const expectedScore = watch('expectedScore');
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} noValidate className="space-y-6">
-      <div>
-        <div className="flex items-center justify-between text-sm">
-          <p className="font-medium">
-            Step {step} of {STEPS.length} · <span className="text-muted-foreground">{activeStep.title}</span>
-          </p>
-          <p className="text-muted-foreground">{Math.round((step / STEPS.length) * 100)}%</p>
-        </div>
-        <Progress value={(step / STEPS.length) * 100} className="mt-2" />
-      </div>
+    <form onSubmit={handleSubmit(onSubmit)} noValidate>
+      <div className="grid grid-cols-1 gap-[52px] lg:grid-cols-[1fr_372px]">
+        {/* ── Main form column ── */}
+        <div className="flex flex-col gap-[34px]">
+          {/* Section heading */}
+          <div className="flex flex-col gap-[7px]">
+            <h2 className="m-0 text-[27px] font-normal leading-[1.2] tracking-[-0.02em] text-[#15191a]">
+              Let&apos;s estimate your rank
+            </h2>
+            <p className="m-0 max-w-[56ch] text-[14.5px] leading-[1.55] text-[#6b7472]">
+              Rough answers are fine — we&apos;ll show you a range, not a false promise. You can re-run
+              this once your score is confirmed.
+            </p>
+          </div>
 
-      <Card>
-        <CardContent className="space-y-5 p-6">
-          {step === 1 ? (
-            <>
-              <div className="space-y-2">
-                <Label htmlFor="candidateName">Full name</Label>
-                <Input
+          {/* ─ Your details ─ */}
+          <div className="flex flex-col gap-4">
+            <span className="text-[11.5px] font-medium leading-none tracking-[.1em] uppercase text-[#6b7472]">
+              Your details
+            </span>
+
+            {/* Name + Gender */}
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+              <div className="flex flex-col gap-[7px]">
+                <label htmlFor="candidateName" className="text-[13px] font-medium leading-none text-[#2b3332]">
+                  Full name
+                </label>
+                <StyledInput
                   id="candidateName"
-                  autoComplete="name"
+                  value={watch('candidateName')}
+                  onChange={(e) => setValue('candidateName', e.target.value, { shouldValidate: true })}
                   placeholder="Dr. Aditi Sharma"
                   aria-invalid={Boolean(errors.candidateName)}
                   aria-describedby={errors.candidateName ? 'candidateName-error' : undefined}
-                  {...register('candidateName')}
                 />
                 <FieldError id="candidateName-error" message={errors.candidateName?.message} />
               </div>
 
-              <div className="space-y-2">
-                <Label>Gender</Label>
-                <RadioGroup
-                  value={watch('gender')}
-                  onValueChange={(v) => setValue('gender', v as 'MALE' | 'FEMALE' | 'OTHER', { shouldValidate: true })}
-                  className="flex flex-wrap gap-2"
-                >
-                  {GENDER_OPTIONS.map((option) => (
-                    <div key={option.value}>
-                      <RadioGroupItem value={option.value} id={`gender-${option.value}`} className="peer sr-only" />
-                      <Label
-                        htmlFor={`gender-${option.value}`}
-                        className={cn(
-                          'flex cursor-pointer items-center rounded-lg border border-border px-4 py-2 text-sm font-medium transition-colors',
-                          'peer-data-[state=checked]:border-primary peer-data-[state=checked]:bg-primary-soft peer-data-[state=checked]:text-primary',
-                          'hover:bg-muted peer-focus-visible:ring-2 peer-focus-visible:ring-ring',
-                        )}
-                      >
-                        {option.label}
-                      </Label>
-                    </div>
+              <div className="flex flex-col gap-[7px]">
+                <span className="text-[13px] font-medium leading-none text-[#2b3332]">Gender</span>
+                <div className="flex gap-2">
+                  {GENDER_OPTIONS.map((opt) => (
+                    <ToggleChip
+                      key={opt.value}
+                      active={gender === opt.value}
+                      onClick={() => setValue('gender', opt.value as CreatePredictionInput['gender'], { shouldValidate: true })}
+                    >
+                      {opt.label}
+                    </ToggleChip>
                   ))}
-                </RadioGroup>
+                </div>
                 <FieldError id="gender-error" message={errors.gender?.message} />
               </div>
+            </div>
 
-              <div className="grid gap-5 sm:grid-cols-2">
-                <div className="space-y-2">
-                  <Label htmlFor="state">Domicile state</Label>
-                  <Select
-                    value={watch('state')}
-                    onValueChange={(v) => setValue('state', v, { shouldValidate: true })}
-                  >
-                    <SelectTrigger id="state" aria-invalid={Boolean(errors.state)}>
-                      <SelectValue placeholder="Select your state" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {INDIAN_STATES.map((state) => (
-                        <SelectItem key={state} value={state}>
-                          {state}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <p className="text-xs text-muted-foreground">Decides which state quota seats you can access.</p>
-                  <FieldError id="state-error" message={errors.state?.message} />
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="category">Category</Label>
-                  <Select
-                    value={watch('category')}
-                    onValueChange={(v) => setValue('category', v as CreatePredictionInput['category'], { shouldValidate: true })}
-                  >
-                    <SelectTrigger id="category" aria-invalid={Boolean(errors.category)}>
-                      <SelectValue placeholder="Select category" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {CATEGORY_OPTIONS.map((option) => (
-                        <SelectItem key={option.value} value={option.value}>
-                          {option.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <FieldError id="category-error" message={errors.category?.message} />
-                </div>
+            {/* State + Category + Sub-category */}
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+              <div className="flex flex-col gap-[7px]">
+                <label htmlFor="state" className="text-[13px] font-medium leading-none text-[#2b3332]">
+                  State
+                </label>
+                <StyledSelect
+                  id="state"
+                  value={watch('state')}
+                  onValueChange={(v) => setValue('state', v, { shouldValidate: true })}
+                  placeholder="Select state"
+                  options={INDIAN_STATES.map((s) => ({ value: s, label: s }))}
+                  aria-invalid={Boolean(errors.state)}
+                />
+                <FieldError id="state-error" message={errors.state?.message} />
               </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="subCategory">Sub category</Label>
-                <Select
+              <div className="flex flex-col gap-[7px]">
+                <label htmlFor="category" className="text-[13px] font-medium leading-none text-[#2b3332]">
+                  Category
+                </label>
+                <StyledSelect
+                  id="category"
+                  value={watch('category')}
+                  onValueChange={(v) => setValue('category', v as CreatePredictionInput['category'], { shouldValidate: true })}
+                  placeholder="Select category"
+                  options={CATEGORY_OPTIONS}
+                  aria-invalid={Boolean(errors.category)}
+                />
+                <FieldError id="category-error" message={errors.category?.message} />
+              </div>
+
+              <div className="flex flex-col gap-[7px]">
+                <label htmlFor="subCategory" className="text-[13px] font-medium leading-none text-[#2b3332]">
+                  Sub-category
+                </label>
+                <StyledSelect
+                  id="subCategory"
                   value={watch('subCategory')}
                   onValueChange={(v) => setValue('subCategory', v as CreatePredictionInput['subCategory'], { shouldValidate: true })}
-                >
-                  <SelectTrigger id="subCategory">
-                    <SelectValue placeholder="None" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {SUB_CATEGORY_OPTIONS.map((option) => (
-                      <SelectItem key={option.value} value={option.value}>
-                        {option.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                  placeholder="None"
+                  options={SUB_CATEGORY_OPTIONS}
+                />
               </div>
-            </>
-          ) : null}
+            </div>
+          </div>
 
-          {step === 2 ? (
-            <>
-              <div className="grid gap-5 sm:grid-cols-2">
-                <div className="space-y-2">
-                  <Label htmlFor="correctAnswers">Correct questions</Label>
-                  <Input
-                    id="correctAnswers"
-                    type="number"
-                    inputMode="numeric"
-                    min={0}
-                    max={EXAM.totalQuestions}
-                    placeholder="0"
-                    aria-invalid={Boolean(errors.correctAnswers)}
-                    {...register('correctAnswers')}
-                  />
-                  <FieldError id="correctAnswers-error" message={errors.correctAnswers?.message} />
-                </div>
+          {/* ─ Your attempt ─ */}
+          <div className="flex flex-col gap-4">
+            <span className="text-[11.5px] font-medium leading-none tracking-[.1em] uppercase text-[#6b7472]">
+              Your attempt
+            </span>
 
-                <div className="space-y-2">
-                  <Label htmlFor="wrongAnswers">Wrong questions</Label>
-                  <Input
-                    id="wrongAnswers"
-                    type="number"
-                    inputMode="numeric"
-                    min={0}
-                    max={EXAM.totalQuestions}
-                    placeholder="0"
-                    aria-invalid={Boolean(errors.wrongAnswers)}
-                    {...register('wrongAnswers')}
-                  />
-                  <FieldError id="wrongAnswers-error" message={errors.wrongAnswers?.message} />
-                </div>
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+              <div className="flex flex-col gap-[7px]">
+                <label htmlFor="correctAnswers" className="text-[13px] font-medium leading-none text-[#2b3332]">
+                  Correct questions
+                </label>
+                <StyledInput
+                  id="correctAnswers"
+                  type="number"
+                  value={correct ?? ''}
+                  onChange={(e) => {
+                    setValue('correctAnswers', Number(e.target.value), { shouldValidate: true });
+                  }}
+                  placeholder="0"
+                  aria-invalid={Boolean(errors.correctAnswers)}
+                  aria-describedby={errors.correctAnswers ? 'correctAnswers-error' : undefined}
+                />
+                <FieldError id="correctAnswers-error" message={errors.correctAnswers?.message} />
               </div>
 
-              <div className="rounded-lg border border-border bg-muted/50 px-4 py-3 text-sm">
-                <p className="flex items-center gap-2 font-medium">
-                  <Calculator className="h-4 w-4 text-primary" aria-hidden />
-                  {EXAM.totalQuestions} questions · +{EXAM.marksPerCorrect} correct · −{EXAM.negativePerWrong} wrong
-                </p>
-                <p className="mt-1 text-muted-foreground">
-                  Attempted {attempted} · Unattempted {unattempted}
-                </p>
+              <div className="flex flex-col gap-[7px]">
+                <label htmlFor="wrongAnswers" className="text-[13px] font-medium leading-none text-[#2b3332]">
+                  Wrong questions
+                </label>
+                <StyledInput
+                  id="wrongAnswers"
+                  type="number"
+                  value={wrong ?? ''}
+                  onChange={(e) => {
+                    setValue('wrongAnswers', Number(e.target.value), { shouldValidate: true });
+                  }}
+                  placeholder="0"
+                  aria-invalid={Boolean(errors.wrongAnswers)}
+                  aria-describedby={errors.wrongAnswers ? 'wrongAnswers-error' : undefined}
+                />
+                <FieldError id="wrongAnswers-error" message={errors.wrongAnswers?.message} />
               </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="expectedScore">
+              <div className="flex flex-col gap-[7px]">
+                <label htmlFor="expectedScore" className="text-[13px] font-medium leading-none text-[#2b3332]">
                   Expected score
-                  {scoreAuto ? <span className="ml-2 text-xs font-normal text-muted-foreground">(calculated)</span> : null}
-                </Label>
-                <Input
+                </label>
+                <StyledInput
                   id="expectedScore"
                   type="number"
-                  inputMode="numeric"
-                  max={EXAM.maxScore}
-                  placeholder="0"
+                  value={expectedScore ?? ''}
+                  onChange={(e) => {
+                    setScoreAuto(false);
+                    setValue('expectedScore', Number(e.target.value), { shouldValidate: true });
+                  }}
+                  readOnly={scoreAuto && Boolean(expectedScore)}
+                  suffix={scoreAuto && expectedScore ? 'auto-calculated' : undefined}
                   aria-invalid={Boolean(errors.expectedScore)}
-                  {...register('expectedScore', { onChange: () => setScoreAuto(false) })}
+                  aria-describedby={errors.expectedScore ? 'expectedScore-error' : undefined}
                 />
-                <p className="text-xs text-muted-foreground">
-                  Out of {EXAM.maxScore}. Edit this if you have a different estimate from your answer key.
-                </p>
                 <FieldError id="expectedScore-error" message={errors.expectedScore?.message} />
               </div>
-            </>
-          ) : null}
-
-          {step === 3 ? (
-            <div className="space-y-2">
-              <Label>Preferred college type</Label>
-              <RadioGroup
-                value={watch('preferredType')}
-                onValueChange={(v) => setValue('preferredType', v as CreatePredictionInput['preferredType'], { shouldValidate: true })}
-                className="grid gap-3 sm:grid-cols-2"
-              >
-                {PREFERRED_TYPE_OPTIONS.map((option) => (
-                  <div key={option.value}>
-                    <RadioGroupItem value={option.value} id={`type-${option.value}`} className="peer sr-only" />
-                    <Label
-                      htmlFor={`type-${option.value}`}
-                      className={cn(
-                        'flex cursor-pointer flex-col gap-0.5 rounded-lg border border-border p-4 transition-colors',
-                        'peer-data-[state=checked]:border-primary peer-data-[state=checked]:bg-primary-soft',
-                        'hover:bg-muted peer-focus-visible:ring-2 peer-focus-visible:ring-ring',
-                      )}
-                    >
-                      <span className="text-sm font-semibold">{option.label}</span>
-                      <span className="text-xs font-normal text-muted-foreground">{option.hint}</span>
-                    </Label>
-                  </div>
-                ))}
-              </RadioGroup>
-              <Disclaimer className="pt-2" />
             </div>
-          ) : null}
-        </CardContent>
-      </Card>
 
-      <div className="flex items-center justify-between gap-3">
-        <Button
-          type="button"
-          variant="ghost"
-          onClick={() => setStep((s) => Math.max(1, s - 1))}
-          disabled={step === 1 || submitting}
-        >
-          <ArrowLeft aria-hidden />
-          Back
-        </Button>
+            <p className="text-[12.5px] leading-relaxed text-[#6b7472]">
+              Marking scheme: +{EXAM.marksPerCorrect} correct, −{EXAM.negativePerWrong} incorrect.
+              {attempted > 0 ? ` Attempted ${attempted}.` : ''} Override the score if you already have your official card.
+            </p>
+          </div>
 
-        {/*
-          * Both footer buttons are type="button" on purpose.
-          *
-          * Continue and the final action occupy the same position, and React
-          * flushes the step change synchronously during the discrete click
-          * event. With a type="submit" here, the browser would evaluate the
-          * click's default action against the *replacement* button and fire a
-          * native submit the instant the user reached the last step — skipping
-          * it entirely and discarding their college preference. Submitting
-          * explicitly removes the native default action from the click path;
-          * the form's onSubmit still handles Enter.
-          */}
-        {step < STEPS.length ? (
-          <Button type="button" size="lg" onClick={next}>
-            Continue
-            <ArrowRight aria-hidden />
-          </Button>
-        ) : (
-          <Button type="button" size="lg" loading={submitting} onClick={handleSubmit(onSubmit)}>
-            <Sparkles aria-hidden />
-            Predict my rank
-          </Button>
-        )}
+          {/* ─ Preferred college type ─ */}
+          <div className="flex flex-col gap-3.5">
+            <span className="text-[11.5px] font-medium leading-none tracking-[.1em] uppercase text-[#6b7472]">
+              Preferred college type
+            </span>
+            <div className="flex flex-wrap gap-2.5">
+              {PREFERRED_TYPE_OPTIONS.map((opt) => (
+                <PillChip
+                  key={opt.value}
+                  active={preferredType === opt.value}
+                  onClick={() => setValue('preferredType', opt.value as CreatePredictionInput['preferredType'], { shouldValidate: true })}
+                >
+                  {opt.label}
+                </PillChip>
+              ))}
+            </div>
+          </div>
+
+          {/* Submit row */}
+          <div className="flex items-center gap-4 pt-1.5">
+            <button
+              type="submit"
+              disabled={submitting}
+              className="rounded-[9px] bg-primary px-[30px] py-[15px] text-[15px] font-medium leading-none text-white transition-opacity hover:opacity-90 disabled:opacity-60"
+            >
+              {submitting ? (
+                <span className="flex items-center gap-2">
+                  <Sparkles className="h-4 w-4 animate-pulse" aria-hidden />
+                  Predicting…
+                </span>
+              ) : (
+                'Predict my rank'
+              )}
+            </button>
+            <span className="text-[13px] leading-relaxed text-[#6b7472]">
+              Free — your rank range and summary. No credit used yet.
+            </span>
+          </div>
+        </div>
+
+        {/* ── Right sidebar ── */}
+        <div className="flex flex-col gap-4">
+          {/* What you&apos;ll get card */}
+          <div className="flex flex-col gap-3.5 rounded-[11px] border border-black/[0.08] bg-[#faf9f6] p-[22px]">
+            <span className="text-[11.5px] font-medium leading-none tracking-[.1em] uppercase text-[#6b7472]">
+              What you&apos;ll get
+            </span>
+            <div className="flex flex-col gap-[11px]">
+              <div className="flex items-start gap-2.5">
+                <span className="mt-0.5 h-4 w-4 shrink-0 rounded-full bg-[#e8f1ef]" aria-hidden />
+                <div className="flex flex-col gap-0.5">
+                  <span className="text-[13.5px] font-medium leading-[1.3] text-[#15191a]">Free now</span>
+                  <span className="text-[12.5px] leading-[1.45] text-[#6b7472]">
+                    Rank range, confidence, opportunity counts
+                  </span>
+                </div>
+              </div>
+              <div className="flex items-start gap-2.5">
+                <span className="mt-0.5 h-4 w-4 shrink-0 rounded-full bg-[#eceae5]" aria-hidden />
+                <div className="flex flex-col gap-0.5">
+                  <span className="text-[13.5px] font-medium leading-[1.3] text-[#15191a]">1 credit</span>
+                  <span className="text-[12.5px] leading-[1.45] text-[#6b7472]">
+                    Full college analysis, AIQ + state quota, dream validation, PDF
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Accuracy note card */}
+          <div className="flex flex-col gap-2.5 rounded-[11px] border border-black/[0.10] bg-white p-5">
+            <span className="text-[13.5px] font-medium leading-[1.3] text-[#15191a]">
+              A note on accuracy
+            </span>
+            <p className="m-0 text-[12.5px] leading-[1.55] text-[#6b7472]">
+              We model from four years of closing ranks and quota rules. Counselling outcomes shift
+              year to year, so we always give you a band and tell you how confident we are.
+            </p>
+          </div>
+        </div>
       </div>
     </form>
   );

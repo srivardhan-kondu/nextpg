@@ -132,3 +132,49 @@ export const BAND_META = {
     caption: 'These may be difficult but still worth considering.',
   },
 } as const;
+
+/**
+ * Nomenclature used by counselling authorities, mapped to our branch names.
+ *
+ * MCC and the state bodies do not use the names in `BRANCHES`: they write
+ * "MD Radiodiagnosis" for Radiology, "Paediatrics" for Pediatrics, "Pulmonary
+ * Medicine" for Respiratory Medicine. Without this, roughly half of every real
+ * import lands in the review queue purely over spelling.
+ *
+ * These are curated by us, not inferred by a model — an alias is a decision
+ * about equivalence, and getting one wrong silently files cutoffs under the
+ * wrong speciality.
+ */
+export const BRANCH_ALIASES: Record<BranchName, string[]> = {
+  Radiology: ['Radiodiagnosis', 'Radio Diagnosis', 'Radio-Diagnosis', 'Radiotherapy Diagnosis'],
+  Dermatology: [
+    'Dermatology Venereology and Leprosy', 'Dermatology Venereology & Leprosy',
+    'DVL', 'Skin and VD', 'Skin & VD', 'Venereology',
+  ],
+  'General Medicine': ['Internal Medicine', 'Gen Medicine', 'Medicine'],
+  Pediatrics: ['Paediatrics', 'Child Health'],
+  'General Surgery': ['Gen Surgery', 'Surgery'],
+  Orthopedics: ['Orthopaedics', 'Ortho', 'Orthopaedic Surgery'],
+  Psychiatry: ['Psychological Medicine'],
+  Anaesthesia: ['Anaesthesiology', 'Anesthesiology', 'Anesthesia'],
+  Pathology: ['Laboratory Medicine'],
+  ENT: ['Otorhinolaryngology', 'Oto Rhino Laryngology', 'Oto-Rhino-Laryngology', 'ENT Surgery'],
+  Ophthalmology: ['Eye', 'Ophthalmic Medicine'],
+  'Emergency Medicine': ['Accident and Emergency', 'Emergency and Critical Care'],
+  'Respiratory Medicine': [
+    'Pulmonary Medicine', 'TB and Chest', 'TB & Chest',
+    'Tuberculosis and Respiratory Diseases', 'Pulmonary Medicine and Tuberculosis',
+  ],
+  'Family Medicine': ['General Practice'],
+  'Community Medicine': [
+    'Preventive and Social Medicine', 'Social and Preventive Medicine', 'PSM', 'Public Health',
+  ],
+  Microbiology: ['Medical Microbiology'],
+  Pharmacology: ['Clinical Pharmacology'],
+  Anatomy: ['Human Anatomy'],
+  Physiology: ['Human Physiology'],
+  Biochemistry: ['Medical Biochemistry'],
+};
+
+/** Degree prefixes counselling documents put in front of the speciality. */
+export const DEGREE_PREFIXES = ['MD', 'MS', 'DNB', 'Diploma', 'M.D.', 'M.S.', 'PG Diploma'];

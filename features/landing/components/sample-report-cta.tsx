@@ -1,42 +1,24 @@
 import Link from 'next/link';
-import { Button } from '@/components/ui/button';
 
-/** Mini page-preview strip, mirroring the "See a Sample Report" row in the design. */
-function PagePreview({ accent = false }: { accent?: boolean }) {
-  return (
-    <div className="w-28 shrink-0 rounded-md border border-border bg-background p-2 shadow-card sm:w-32">
-      <div className={`h-1.5 w-10 rounded-full ${accent ? 'bg-primary' : 'bg-secondary'}`} />
-      <div className="mt-2 space-y-1">
-        {Array.from({ length: 6 }).map((_, i) => (
-          <div key={i} className="h-1 rounded-full bg-secondary" style={{ width: `${95 - i * 9}%` }} />
-        ))}
-      </div>
-      <div className="mt-2 h-6 rounded bg-primary-soft" />
-      <div className="mt-2 space-y-1">
-        {Array.from({ length: 3 }).map((_, i) => (
-          <div key={i} className="h-1 rounded-full bg-secondary" style={{ width: `${80 - i * 14}%` }} />
-        ))}
-      </div>
-    </div>
-  );
-}
-
+/** Minimal sample-report call-to-action — warm neutral style matching design doc. */
 export function SampleReportCta() {
   return (
-    <section className="border-b border-border/60 bg-canvas py-14">
-      <div className="container flex flex-col items-center gap-8 lg:flex-row lg:justify-between">
-        <h2 className="text-xl font-bold tracking-tight sm:text-2xl">See a Sample Report</h2>
-
-        <div className="flex gap-3 overflow-x-auto pb-2" aria-hidden>
-          <PagePreview accent />
-          <PagePreview />
-          <PagePreview />
-          <PagePreview />
+    <section className="border-b border-black/[0.08] bg-white py-14">
+      <div className="mx-auto flex max-w-[1440px] flex-col items-center justify-between gap-6 px-10 sm:flex-row">
+        <div className="flex flex-col gap-2">
+          <h2 className="text-[20px] font-normal leading-[1.2] tracking-[-0.01em] text-[#15191a]">
+            See what a full report looks like
+          </h2>
+          <p className="text-[14px] leading-relaxed text-[#6b7472]">
+            Browse a sample prediction before you run your own.
+          </p>
         </div>
-
-        <Button asChild variant="outline" size="lg" className="shrink-0">
-          <Link href="/sample-report">View Sample Report</Link>
-        </Button>
+        <Link
+          href="/sample-report"
+          className="shrink-0 rounded-[8px] border border-black/[0.14] bg-white px-5 py-3 text-[13.5px] font-medium leading-none text-[#15191a] transition-colors hover:bg-[#faf9f6]"
+        >
+          View sample report
+        </Link>
       </div>
     </section>
   );

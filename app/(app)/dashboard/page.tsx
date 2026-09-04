@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
-import { CreditCard, FileText, Sparkles, Target } from 'lucide-react';
+import { FileText, Sparkles, Target } from 'lucide-react';
 
 import { requireUser } from '@/lib/auth/guards';
 import { prisma } from '@/lib/prisma';
@@ -43,15 +43,15 @@ export default async function DashboardPage() {
   return (
     <div className="space-y-7">
       <PageHeader
-        title={`Welcome back, ${firstName}`}
-        description="Your predictions, credits and reports in one place."
+        title={`Good to see you again, ${firstName}`}
+        description={`Your predictions, credits and reports in one place. Credits never expire — re-run any time.`}
         action={
-          <Button asChild size="lg">
-            <Link href="/predictor">
-              <Target aria-hidden />
-              New prediction
-            </Link>
-          </Button>
+          <Link
+            href="/predictor"
+            className="rounded-[8px] bg-primary px-5 py-3 text-[13.5px] font-medium leading-none text-white transition-opacity hover:opacity-90"
+          >
+            New prediction
+          </Link>
         }
       />
 
@@ -73,22 +73,20 @@ export default async function DashboardPage() {
       </section>
 
       {credit.balance === 0 ? (
-        <Card className="border-primary/30 bg-primary-soft/50">
-          <CardContent className="flex flex-col gap-4 p-5 sm:flex-row sm:items-center sm:justify-between">
-            <div>
-              <p className="font-semibold">You are out of credits</p>
-              <p className="mt-0.5 text-sm text-muted-foreground">
-                Get {pricing.credits} prediction credits for {pricing.amountLabel} — no subscription, no renewal.
-              </p>
-            </div>
-            <Button asChild className="shrink-0">
-              <Link href="/credits">
-                <CreditCard aria-hidden />
-                Get {pricing.credits} credits
-              </Link>
-            </Button>
-          </CardContent>
-        </Card>
+        <div className="flex flex-col gap-3 rounded-[11px] border border-[#cfdedb] bg-[#f4f7f6] p-5 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <p className="text-[14px] font-medium text-[#0b544e]">You are out of credits</p>
+            <p className="mt-1 text-[13px] leading-relaxed text-[#4e5654]">
+              Get {pricing.credits} prediction credits for {pricing.amountLabel} — no subscription, no renewal.
+            </p>
+          </div>
+          <Link
+            href="/credits"
+            className="shrink-0 rounded-[8px] bg-primary px-5 py-3 text-[13.5px] font-medium leading-none text-white transition-opacity hover:opacity-90"
+          >
+            Get {pricing.credits} credits
+          </Link>
+        </div>
       ) : null}
 
       <section aria-labelledby="history-heading" className="space-y-4">
