@@ -9,6 +9,17 @@ export class InsufficientCreditsError extends Error {
   }
 }
 
+/**
+ * Interactive-transaction options for the money paths.
+ *
+ * Prisma defaults to a 5s timeout and 2s maxWait. Against a pooled serverless
+ * Postgres (Neon) those are too tight: a cold start plus five sequential
+ * round-trips from a distant region can exceed 5s, and the transaction is then
+ * rolled back mid-flight. Failing a credit consumption for latency is far worse
+ * than holding a short transaction open a little longer.
+ */
+const TX_OPTIONS = { maxWait: 10_000, timeout: 20_000 } as const;
+
 export async function ensureCreditAccount(userId: string) {
   return prisma.predictionCredit.upsert({
     where: { userId },
@@ -75,7 +86,7 @@ export async function consumeCredit(params: {
 
       return { alreadyCharged: false as const, transaction };
     },
-    { isolationLevel: Prisma.TransactionIsolationLevel.ReadCommitted },
+    { ...TX_OPTIONS, isolationLevel: Prisma.TransactionIsolationLevel.ReadCommitted },
   );
 }
 
@@ -126,7 +137,7 @@ export async function grantCredits(params: {
     });
 
     return { alreadyGranted: false as const, transaction };
-  });
+  }, TX_OPTIONS);
 }
 
 export async function listTransactions(userId: string, limit = 50) {
@@ -179,5 +190,5 @@ export async function adjustCredits(params: {
       },
     });
     return transaction;
-  });
+  }, TX_OPTIONS);
 }

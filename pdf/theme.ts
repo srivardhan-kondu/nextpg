@@ -36,6 +36,12 @@ export const likelihoodBg = {
   VERY_DIFFICULT: palette.stretchSoft,
 } as const;
 
+/**
+ * @react-pdf resolves `lineHeight` to an absolute value from the fontSize where
+ * it is declared, and that value inherits. The page sets it at 9.5pt, so any
+ * style with a larger fontSize MUST declare its own lineHeight — otherwise its
+ * text is laid out in a ~13.8pt box and overlaps whatever follows.
+ */
 export const styles = StyleSheet.create({
   page: {
     paddingTop: 44,
@@ -50,12 +56,12 @@ export const styles = StyleSheet.create({
   // ── Cover ──
   cover: { paddingTop: 0, paddingHorizontal: 0, paddingBottom: 0 },
   coverBand: { backgroundColor: palette.primary, paddingHorizontal: 44, paddingTop: 64, paddingBottom: 48 },
-  coverBrand: { color: palette.white, fontSize: 26, fontFamily: 'Helvetica-Bold', letterSpacing: -0.5 },
-  coverTagline: { color: '#dbeafe', fontSize: 10.5, marginTop: 6 },
-  coverTitle: { color: palette.white, fontSize: 17, fontFamily: 'Helvetica-Bold', marginTop: 34 },
+  coverBrand: { color: palette.white, fontSize: 26, fontFamily: 'Helvetica-Bold', letterSpacing: -0.5, lineHeight: 1.2 },
+  coverTagline: { color: '#dbeafe', fontSize: 10.5, marginTop: 6, lineHeight: 1.4 },
+  coverTitle: { color: palette.white, fontSize: 17, fontFamily: 'Helvetica-Bold', marginTop: 34, lineHeight: 1.3 },
   coverBody: { paddingHorizontal: 44, paddingTop: 32 },
-  coverName: { fontSize: 21, fontFamily: 'Helvetica-Bold', color: palette.ink },
-  coverMeta: { fontSize: 10, color: palette.muted, marginTop: 4 },
+  coverName: { fontSize: 21, fontFamily: 'Helvetica-Bold', color: palette.ink, lineHeight: 1.2 },
+  coverMeta: { fontSize: 10, color: palette.muted, marginTop: 4, lineHeight: 1.4 },
 
   headline: {
     marginTop: 26,
@@ -65,14 +71,15 @@ export const styles = StyleSheet.create({
     backgroundColor: palette.primarySoft,
     padding: 20,
   },
-  headlineLabel: { fontSize: 9, color: palette.muted, textTransform: 'uppercase', letterSpacing: 0.7 },
-  headlineValue: { fontSize: 27, fontFamily: 'Helvetica-Bold', color: palette.primary, marginTop: 5 },
-  headlineHint: { fontSize: 9, color: palette.muted, marginTop: 7 },
+  headlineLabel: { fontSize: 9, color: palette.muted, textTransform: 'uppercase', letterSpacing: 0.7, lineHeight: 1.4 },
+  headlineValue: { fontSize: 27, fontFamily: 'Helvetica-Bold', color: palette.primary, marginTop: 5, lineHeight: 1.25 },
+  headlineHint: { fontSize: 9, color: palette.muted, marginTop: 7, lineHeight: 1.45 },
 
   // ── Structure ──
   section: { marginTop: 20 },
   sectionTitle: {
     fontSize: 12.5,
+    lineHeight: 1.3,
     fontFamily: 'Helvetica-Bold',
     color: palette.ink,
     borderBottomWidth: 2,
@@ -94,13 +101,13 @@ export const styles = StyleSheet.create({
     backgroundColor: palette.surface,
   },
   statLabel: { fontSize: 7.5, color: palette.muted, textTransform: 'uppercase', letterSpacing: 0.5 },
-  statValue: { fontSize: 14, fontFamily: 'Helvetica-Bold', color: palette.ink, marginTop: 3 },
+  statValue: { fontSize: 14, fontFamily: 'Helvetica-Bold', color: palette.ink, marginTop: 3, lineHeight: 1.25 },
 
   // ── Key/value grid ──
   kvGrid: { flexDirection: 'row', flexWrap: 'wrap' },
   kvItem: { width: '33.33%', marginBottom: 10, paddingRight: 8 },
   kvLabel: { fontSize: 7.5, color: palette.muted, textTransform: 'uppercase', letterSpacing: 0.5 },
-  kvValue: { fontSize: 10, color: palette.ink, fontFamily: 'Helvetica-Bold', marginTop: 2 },
+  kvValue: { fontSize: 10, color: palette.ink, fontFamily: 'Helvetica-Bold', marginTop: 2, lineHeight: 1.35 },
 
   // ── Tables ──
   table: { borderWidth: 1, borderColor: palette.line, borderRadius: 6, overflow: 'hidden' },
@@ -129,7 +136,7 @@ export const styles = StyleSheet.create({
     marginBottom: 8,
     borderRadius: 3,
   },
-  calloutTitle: { fontSize: 10, fontFamily: 'Helvetica-Bold', color: palette.ink, marginBottom: 3 },
+  calloutTitle: { fontSize: 10, fontFamily: 'Helvetica-Bold', color: palette.ink, marginBottom: 3, lineHeight: 1.35 },
 
   pill: {
     alignSelf: 'flex-start',
