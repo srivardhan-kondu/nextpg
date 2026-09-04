@@ -1,0 +1,586 @@
+// NextPG — production schema
+// Neon PostgreSQL. Money is stored in paise (Int) to avoid float drift.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+// ─────────────────────────── Enums ───────────────────────────
+
+enum UserRole {
+  USER
+  ADMIN
+  SUPER_ADMIN
+}
+
+enum CollegeType {
+  GOVERNMENT
+  PRIVATE
+  DEEMED
+  DNB
+}
+
+enum QuotaType {
+  AIQ
+  STATE
+  DEEMED
+  MANAGEMENT
+  NRI
+  INSTITUTIONAL
+}
+
+enum Category {
+  GENERAL
+  EWS
+  OBC
+  SC
+  ST
+}
+
+enum SubCategory {
+  NONE
+  PWD
+  ARMED_FORCES
+  NRI
+  MANAGEMENT
+  MINORITY
+}
+
+enum PreferredCollegeType {
+  GOVERNMENT
+  PRIVATE
+  DEEMED
+  DNB
+  ANY
+}
+
+enum Gender {
+  MALE
+  FEMALE
+  OTHER
+}
+
+enum Likelihood {
+  STRONG
+  MODERATE
+  STRETCH
+  VERY_DIFFICULT
+}
+
+enum PredictionStatus {
+  PREVIEW // free tier: rank range only, premium sections locked
+  UNLOCKED // a credit was spent; full report available forever
+}
+
+enum CreditTransactionType {
+  PURCHASE
+  CONSUMPTION
+  REFUND
+  BONUS
+  ADMIN_ADJUSTMENT
+  EXPIRY
+}
+
+enum PaymentStatus {
+  CREATED
+  ATTEMPTED
+  PAID
+  FAILED
+  REFUNDED
+}
+
+enum ReportStatus {
+  PENDING
+  GENERATING
+  READY
+  FAILED
+}
+
+// ─────────────────────────── Auth / users ───────────────────────────
+
+model User {
+  id            String    @id @default(cuid())
+  name          String?
+  email         String    @unique
+  emailVerified DateTime?
+  image         String?
+  phone         String?
+  role          UserRole  @default(USER)
+
+  // Denormalised profile defaults so the wizard can pre-fill on repeat visits.
+  defaultState       String?
+  defaultCategory    Category?
+  defaultSubCategory SubCategory? @default(NONE)
+  gender             Gender?
+
+  isBlocked Boolean   @default(false)
+  lastLogin DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  accounts         Account[]
+  sessions         Session[]
+  credit           PredictionCredit?
+  transactions     CreditTransaction[]
+  predictions      Prediction[]
+  dreamValidations DreamValidation[]
+  payments         Payment[]
+  reports          Report[]
+  auditLogs        AuditLog[]
+  adminProfile     AdminUser?
+  assistantThreads AssistantThread[]
+
+  @@index([role])
+  @@index([createdAt])
+  @@map("users")
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+  @@index([userId])
+  @@map("accounts")
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  ipAddress    String?
+  userAgent    String?  @db.Text
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("sessions")
+}
+
+// Email OTP login. Tokens are stored hashed; the plaintext only exists in the email.
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+  attempts   Int      @default(0)
+
+  @@unique([identifier, token])
+  @@index([expires])
+  @@map("verification_tokens")
+}
+
+model AdminUser {
+  id          String   @id @default(cuid())
+  userId      String   @unique
+  permissions String[] @default([])
+  notes       String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("admin_users")
+}
+
+// ─────────────────────────── Credits ───────────────────────────
+
+// One row per user — the authoritative balance. All mutations go through
+// a transaction that also writes a CreditTransaction ledger row.
+model PredictionCredit {
+  id        String @id @default(cuid())
+  userId    String @unique
+  balance   Int    @default(0)
+  purchased Int    @default(0)
+  used      Int    @default(0)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("prediction_credits")
+}
+
+model CreditTransaction {
+  id             String                @id @default(cuid())
+  userId         String
+  type           CreditTransactionType
+  amount         Int // signed: +5 purchase, -1 consumption
+  balanceAfter   Int
+  description    String
+  paymentId      String?
+  predictionId   String?
+  // Guards double-spend / double-credit: one row per logical event.
+  idempotencyKey String?               @unique
+  metadata       Json?
+  createdAt      DateTime              @default(now())
+
+  user    User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  payment Payment? @relation(fields: [paymentId], references: [id], onDelete: SetNull)
+
+  @@index([userId, createdAt])
+  @@index([type])
+  @@map("credit_transactions")
+}
+
+// ─────────────────────────── Payments ───────────────────────────
+
+model Payment {
+  id     String @id @default(cuid())
+  userId String
+
+  razorpayOrderId   String  @unique
+  razorpayPaymentId String? @unique
+  razorpaySignature String?
+
+  amount      Int // paise
+  currency    String        @default("INR")
+  creditsSold Int
+  status      PaymentStatus @default(CREATED)
+
+  method           String?
+  errorCode        String?
+  errorDescription String?
+  receipt          String?
+  notes            Json?
+  refundedAt       DateTime?
+  paidAt           DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user         User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  transactions CreditTransaction[]
+
+  @@index([userId, createdAt])
+  @@index([status])
+  @@map("payments")
+}
+
+// ─────────────────────────── Predictions ───────────────────────────
+
+model Prediction {
+  id     String @id @default(cuid())
+  userId String
+
+  // Inputs (snapshotted — a later profile edit must not rewrite history)
+  candidateName  String
+  gender         Gender
+  state          String
+  category       Category
+  subCategory    SubCategory          @default(NONE)
+  correctAnswers Int
+  wrongAnswers   Int
+  unattempted    Int                  @default(0)
+  expectedScore  Int
+  preferredType  PreferredCollegeType @default(ANY)
+
+  // Outputs
+  rankMin            Int
+  rankMax            Int
+  confidence         Int // 0-100
+  percentile         Float?
+  aiqOpportunities   Int    @default(0)
+  stateOpportunities Int    @default(0)
+  totalOpportunities Int    @default(0)
+
+  // Full engine payload: bands, colleges, branches, strategy.
+  resultPayload Json
+  engineVersion String @default("rule-based-v1")
+  providerId    String @default("rule-based")
+
+  status     PredictionStatus @default(PREVIEW)
+  unlockedAt DateTime?
+  examYear   Int              @default(2025)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user             User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  reports          Report[]
+  dreamValidations DreamValidation[]
+  assistantThreads AssistantThread[]
+
+  @@index([userId, createdAt])
+  @@index([status])
+  @@index([state, category])
+  @@map("predictions")
+}
+
+model DreamValidation {
+  id           String  @id @default(cuid())
+  userId       String
+  predictionId String?
+
+  dreamBranch  String
+  dreamCollege String?
+  collegeId    String?
+
+  branchProbability Int // 0-100
+  branchLikelihood  Likelihood
+  branchMessage     String     @db.Text
+
+  collegeLikelihood Likelihood?
+  requiredRankMin   Int?
+  requiredRankMax   Int?
+  studentRankMin    Int?
+  studentRankMax    Int?
+  eligibleQuotas    String[]    @default([])
+  availableBranches String[]    @default([])
+  collegeMessage    String?     @db.Text
+
+  resultPayload Json?
+  createdAt     DateTime @default(now())
+
+  user       User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  prediction Prediction? @relation(fields: [predictionId], references: [id], onDelete: SetNull)
+  college    College?    @relation(fields: [collegeId], references: [id], onDelete: SetNull)
+
+  @@index([userId, createdAt])
+  @@index([dreamBranch])
+  @@map("dream_validations")
+}
+
+model Report {
+  id           String @id @default(cuid())
+  userId       String
+  predictionId String
+
+  title      String
+  status     ReportStatus @default(PENDING)
+  storageKey String? // blob/S3 key when persisted; null = regenerate on demand
+  fileSize   Int?
+  pageCount  Int?
+  checksum   String?
+  version    Int          @default(1)
+  metadata   Json?
+  error      String?
+
+  downloadCount  Int       @default(0)
+  lastDownloadAt DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user       User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  prediction Prediction @relation(fields: [predictionId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt])
+  @@index([predictionId])
+  @@map("reports")
+}
+
+// ─────────────────────────── Reference data ───────────────────────────
+
+model College {
+  id              String      @id @default(cuid())
+  name            String
+  shortName       String?
+  slug            String      @unique
+  state           String
+  city            String?
+  type            CollegeType
+  // Institute-level affiliations, e.g. ["AIIMS", "INI"] — drives INI-CET messaging.
+  tags            String[]    @default([])
+  university      String?
+  establishedYear Int?
+  website         String?
+  isActive        Boolean     @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  cutoffs          HistoricalCutoff[]
+  seats            CollegeSeat[]
+  dreamValidations DreamValidation[]
+
+  @@index([state])
+  @@index([type])
+  @@index([name])
+  @@map("college_database")
+}
+
+model Branch {
+  id          String  @id @default(cuid())
+  name        String  @unique
+  slug        String  @unique
+  code        String? // e.g. MD-GM
+  degree      String  @default("MD") // MD | MS | DIPLOMA | DNB
+  isClinical  Boolean @default(true)
+  popularity  Int     @default(0) // drives dropdown ordering
+  description String? @db.Text
+  isActive    Boolean @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  cutoffs HistoricalCutoff[]
+  seats   CollegeSeat[]
+
+  @@index([popularity])
+  @@map("branch_database")
+}
+
+// Seat matrix — how many seats exist, independent of the cutoff that closed them.
+model CollegeSeat {
+  id           String    @id @default(cuid())
+  collegeId    String
+  branchId     String
+  quota        QuotaType
+  seatCount    Int
+  academicYear Int
+
+  college College @relation(fields: [collegeId], references: [id], onDelete: Cascade)
+  branch  Branch  @relation(fields: [branchId], references: [id], onDelete: Cascade)
+
+  @@unique([collegeId, branchId, quota, academicYear])
+  @@index([collegeId])
+  @@map("college_seats")
+}
+
+// The core prediction substrate: closing rank per college × branch × quota × category × year.
+model HistoricalCutoff {
+  id          String      @id @default(cuid())
+  collegeId   String
+  branchId    String
+  quota       QuotaType
+  category    Category
+  subCategory SubCategory @default(NONE)
+
+  closingRank  Int
+  openingRank  Int?
+  closingScore Int?
+  seatCount    Int    @default(0)
+  round        Int    @default(1)
+  academicYear Int
+  state        String // denormalised from college for fast state-quota filtering
+
+  source     String? // "MCC 2024 R3", "KNRUHS 2024"
+  verifiedAt DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  college College @relation(fields: [collegeId], references: [id], onDelete: Cascade)
+  branch  Branch  @relation(fields: [branchId], references: [id], onDelete: Cascade)
+
+  @@unique([collegeId, branchId, quota, category, subCategory, round, academicYear])
+  @@index([academicYear, quota, category])
+  @@index([closingRank])
+  @@index([state, quota, category])
+  @@index([branchId, closingRank])
+  @@map("historical_cutoffs")
+}
+
+// Domicile / reservation rules per state — drives which quotas a candidate can access.
+model QuotaRule {
+  id    String @id @default(cuid())
+  state String
+
+  quota            QuotaType
+  category         Category?
+  reservationPct   Float?
+  // Whether the candidate must hold domicile of `state` to use this quota.
+  requiresDomicile Boolean   @default(true)
+  seatSharePct     Float? // e.g. AIQ takes 50% of government PG seats
+  notes            String?   @db.Text
+  academicYear     Int
+  isActive         Boolean   @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([state, quota, category, academicYear])
+  @@index([state])
+  @@map("quota_rules")
+}
+
+// ─────────────────────────── Assistant ───────────────────────────
+
+model AssistantThread {
+  id           String   @id @default(cuid())
+  userId       String
+  predictionId String?
+  title        String   @default("Counseling chat")
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  user       User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  prediction Prediction?        @relation(fields: [predictionId], references: [id], onDelete: SetNull)
+  messages   AssistantMessage[]
+
+  @@index([userId, updatedAt])
+  @@map("assistant_threads")
+}
+
+model AssistantMessage {
+  id        String   @id @default(cuid())
+  threadId  String
+  role      String // user | assistant | system
+  content   String   @db.Text
+  tokens    Int?
+  createdAt DateTime @default(now())
+
+  thread AssistantThread @relation(fields: [threadId], references: [id], onDelete: Cascade)
+
+  @@index([threadId, createdAt])
+  @@map("assistant_messages")
+}
+
+// ─────────────────────────── Ops ───────────────────────────
+
+model AuditLog {
+  id     String  @id @default(cuid())
+  userId String?
+
+  action     String // credit.consume, payment.verify, admin.college.update …
+  entityType String?
+  entityId   String?
+  severity   String   @default("info") // info | warn | critical
+  ipAddress  String?
+  userAgent  String?  @db.Text
+  metadata   Json?
+  createdAt  DateTime @default(now())
+
+  user User? @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([userId, createdAt])
+  @@index([action, createdAt])
+  @@index([entityType, entityId])
+  @@map("audit_logs")
+}
+
+// Persists Razorpay webhook deliveries so retries are idempotent.
+model WebhookEvent {
+  id          String    @id @default(cuid())
+  provider    String    @default("razorpay")
+  eventId     String    @unique
+  eventType   String
+  payload     Json
+  processedAt DateTime?
+  error       String?   @db.Text
+  createdAt   DateTime  @default(now())
+
+  @@index([eventType, createdAt])
+  @@map("webhook_events")
+}

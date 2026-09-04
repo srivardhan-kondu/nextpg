@@ -1,0 +1,122 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 0 0% 100%;
+    --foreground: 222 47% 11%;
+    --canvas: 214 45% 98%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 222 47% 11%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 222 47% 11%;
+
+    --primary: 221 83% 53%;
+    --primary-foreground: 0 0% 100%;
+    --primary-soft: 219 100% 96%;
+
+    --secondary: 214 40% 96%;
+    --secondary-foreground: 222 47% 11%;
+
+    --muted: 214 40% 96%;
+    --muted-foreground: 215 16% 47%;
+
+    --accent: 219 100% 96%;
+    --accent-foreground: 221 83% 45%;
+
+    --destructive: 0 72% 51%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 214 32% 91%;
+    --input: 214 32% 91%;
+    --ring: 221 83% 53%;
+
+    --strong: 142 71% 36%;
+    --strong-soft: 141 79% 95%;
+    --moderate: 38 92% 50%;
+    --moderate-soft: 48 96% 93%;
+    --stretch: 0 72% 51%;
+    --stretch-soft: 0 86% 97%;
+
+    --radius: 0.625rem;
+  }
+
+  .dark {
+    --background: 222 47% 8%;
+    --foreground: 210 40% 98%;
+    --canvas: 222 47% 6%;
+
+    --card: 222 44% 11%;
+    --card-foreground: 210 40% 98%;
+    --popover: 222 44% 11%;
+    --popover-foreground: 210 40% 98%;
+
+    --primary: 217 91% 60%;
+    --primary-foreground: 222 47% 8%;
+    --primary-soft: 221 60% 18%;
+
+    --secondary: 217 33% 17%;
+    --secondary-foreground: 210 40% 98%;
+
+    --muted: 217 33% 17%;
+    --muted-foreground: 215 20% 65%;
+
+    --accent: 221 60% 18%;
+    --accent-foreground: 213 94% 78%;
+
+    --destructive: 0 63% 45%;
+    --destructive-foreground: 210 40% 98%;
+
+    --border: 217 33% 20%;
+    --input: 217 33% 20%;
+    --ring: 217 91% 60%;
+
+    --strong: 142 69% 45%;
+    --strong-soft: 143 55% 14%;
+    --moderate: 38 92% 55%;
+    --moderate-soft: 33 60% 15%;
+    --stretch: 0 72% 58%;
+    --stretch-soft: 0 50% 16%;
+  }
+
+  * { @apply border-border; }
+  html { -webkit-tap-highlight-color: transparent; }
+  body {
+    @apply bg-background text-foreground antialiased;
+    font-feature-settings: 'cv11', 'ss01';
+    text-rendering: optimizeLegibility;
+  }
+  /* Visible focus for keyboard users only — WCAG 2.4.7 */
+  :focus-visible { @apply outline-none ring-2 ring-ring ring-offset-2 ring-offset-background; }
+  /* Links cannot be `disabled`, so pagination marks them aria-disabled instead.
+     This gives them the matching look and makes them genuinely unclickable. */
+  a[aria-disabled='true'] { @apply pointer-events-none opacity-50; }
+}
+
+@layer components {
+  .app-canvas { @apply bg-canvas; }
+  .surface { @apply rounded-xl border border-border bg-card shadow-card; }
+  .stat-tile { @apply rounded-xl border border-border bg-card px-5 py-4 shadow-card; }
+  .hero-gradient {
+    background:
+      radial-gradient(1100px 460px at 78% -8%, hsl(var(--primary) / 0.10), transparent 62%),
+      linear-gradient(180deg, hsl(var(--primary-soft) / 0.55) 0%, hsl(var(--background)) 74%);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* Print styles — the report page stays usable if a user prints instead of downloading. */
+@media print {
+  .no-print { display: none !important; }
+  body { background: #fff; }
+}
