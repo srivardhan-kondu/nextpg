@@ -215,7 +215,7 @@ async function seedCutoffs() {
 }
 
 async function main() {
-  console.log('Seeding NextPG reference data…\n');
+  console.log('Seeding reference data…\n');
   await seedBranches();
   await seedColleges();
   await seedQuotaRules();

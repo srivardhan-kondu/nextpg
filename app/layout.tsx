@@ -19,7 +19,7 @@ export const metadata: Metadata = {
   description: siteConfig.description,
   keywords: [
     'NEET PG rank predictor', 'NEET PG college predictor', 'AIQ counselling',
-    'state quota PG', 'MD MS admission', 'PG medical counselling', 'NEET PG 2025',
+    'state quota PG', 'MD MS admission', 'PG medical counselling', 'NEET PG 2026',
   ],
   authors: [{ name: siteConfig.brand }],
   openGraph: {

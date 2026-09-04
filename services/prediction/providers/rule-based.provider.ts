@@ -183,7 +183,14 @@ export class RuleBasedPredictionProvider implements PredictionProvider {
       state: input.state,
       category: input.category,
       subCategory: input.subCategory,
-      academicYear: input.examYear - 1,
+      // Key the lookup to the year we actually hold data for, not to the exam
+      // calendar. `examYear - 1` only happened to be right while the exam was
+      // one year ahead of the data; at EXAM_YEAR 2026 it asks for 2025 rules,
+      // finds none, and falls back to the baseline quotas without an error.
+      // Today's rules add nothing beyond that baseline, so nothing observable
+      // changes — but the first rule that does matter would be silently
+      // ignored, and the failure mode is a quieter prediction, not a crash.
+      academicYear: LATEST_CUTOFF_YEAR,
     });
 
     const coverage = await cutoffRepository.coverage(input.category, LATEST_CUTOFF_YEAR);

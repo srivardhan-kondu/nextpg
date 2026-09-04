@@ -2,7 +2,7 @@
   "name": "nextpg",
   "version": "1.0.0",
   "private": true,
-  "description": "NextPG \u2014 Predict Your Rank. Validate Your Dream. Plan Your PG Journey.",
+  "description": "NextPG Predictor \u2014 Predict Your Rank. Validate Your Dream. Plan Your PG Journey.",
   "engines": {
     "node": ">=20.0.0"
   },

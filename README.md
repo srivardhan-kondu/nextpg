@@ -1,4 +1,4 @@
-# NextPG
+# NextPG Predictor
 
 **Predict Your Rank. Validate Your Dream. Plan Your PG Journey.**
 
