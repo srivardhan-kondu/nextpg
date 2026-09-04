@@ -445,7 +445,7 @@ export function PredictionForm({ defaults }: PredictionFormProps) {
               )}
             </button>
             <span className="text-[13px] leading-relaxed text-[#6b7472]">
-              Free — your rank range and summary. No credit used yet.
+              Free — your rank band and seat counts. No credit used yet.
             </span>
           </div>
         </div>
@@ -463,7 +463,7 @@ export function PredictionForm({ defaults }: PredictionFormProps) {
                 <div className="flex flex-col gap-0.5">
                   <span className="text-[13.5px] font-medium leading-[1.3] text-[#15191a]">Free now</span>
                   <span className="text-[12.5px] leading-[1.45] text-[#6b7472]">
-                    Rank range, confidence, opportunity counts
+                    Rank band and opportunity counts
                   </span>
                 </div>
               </div>

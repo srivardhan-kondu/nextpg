@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { Download, Lock } from 'lucide-react';
 import { formatDate, formatRankRange } from '@/lib/utils';
+import { toDisplayRank } from '@/services/prediction/prediction.service';
 import { CATEGORY_LABEL } from '@/lib/constants';
 import type { Category, PredictionStatus } from '@prisma/client';
 
@@ -19,6 +20,12 @@ export interface PredictionHistoryItem {
 /** History row — matching design doc 1e prediction history layout */
 export function PredictionHistoryCard({ item }: { item: PredictionHistoryItem }) {
   const unlocked = item.status === 'UNLOCKED';
+  // A locked row shows the coarse band, same as the detail page.
+  const rank = toDisplayRank({
+    status: unlocked ? 'UNLOCKED' : 'PREVIEW',
+    rankMin: item.rankMin,
+    rankMax: item.rankMax,
+  });
 
   return (
     <article className="grid grid-cols-1 items-center gap-5 rounded-[11px] border border-black/[0.10] bg-white p-[20px] sm:grid-cols-[1.1fr_.9fr_.8fr_.8fr_auto]">
@@ -35,9 +42,11 @@ export function PredictionHistoryCard({ item }: { item: PredictionHistoryItem })
 
       {/* Rank */}
       <div className="flex flex-col gap-[5px]">
-        <span className="text-[12px] leading-none text-[#6b7472]">Estimated rank</span>
+        <span className="text-[12px] leading-none text-[#6b7472]">
+          {rank.banded ? 'Rank band' : 'Estimated rank'}
+        </span>
         <span className="text-[14.5px] leading-none tabular-nums text-[#15191a]">
-          {formatRankRange(item.rankMin, item.rankMax)}
+          {formatRankRange(rank.min, rank.max)}
         </span>
       </div>
 

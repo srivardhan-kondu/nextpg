@@ -12,6 +12,7 @@ import { unlockPredictionAction } from '@/actions/prediction.actions';
 import { pricing } from '@/config/site';
 
 const LOCKED_FEATURES = [
+  'Your exact rank range and confidence score',
   'Detailed college analysis across all bands',
   'AIQ opportunity breakdown',
   'State quota opportunity breakdown',
@@ -69,7 +70,7 @@ export function Paywall({ predictionId, balance, teaser }: PaywallProps) {
             <Lock className="h-4 w-4" aria-hidden />
           </span>
           <div>
-            <h2 className="text-lg font-semibold tracking-tight">Unlock your full report</h2>
+            <h2 className="text-lg font-semibold tracking-tight">Unlock your exact rank and full report</h2>
             <p className="text-sm text-muted-foreground">
               We found {teaser.collegeCount} matching seats — {teaser.aiqOpportunities} AIQ and{' '}
               {teaser.stateOpportunities} state quota — across {teaser.branchCount} branches.

@@ -113,7 +113,7 @@ export function Hero() {
           </div>
 
           <p className="mt-0.5 text-[13px] leading-relaxed text-[#6b7472]">
-            Free rank estimate. No card needed to see your range.
+            Free rank band and seat counts. No card needed to see where you stand.
           </p>
         </div>
 

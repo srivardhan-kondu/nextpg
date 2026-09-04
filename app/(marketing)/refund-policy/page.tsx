@@ -16,8 +16,9 @@ export default function RefundPolicyPage() {
 
       <h2>Before you buy</h2>
       <p>
-        You can run a prediction and see your estimated rank range, confidence score and opportunity counts{' '}
-        <strong>for free</strong>, before paying anything. A{' '}
+        You can run a prediction and see your estimated rank band and opportunity counts{' '}
+        <strong>for free</strong>, before paying anything. Your exact rank range, confidence score and
+        matched seats are what a credit unlocks. A{' '}
         <a href="/sample-report" className="text-primary underline underline-offset-2">sample report</a> shows
         exactly what a credit unlocks. Please use both before purchasing.
       </p>
