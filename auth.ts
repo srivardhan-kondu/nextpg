@@ -89,11 +89,6 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       }
       return token;
     },
-    async session({ session, token }) {
-      if (token.uid) session.user.id = token.uid as string;
-      session.user.role = (token.role as 'USER' | 'ADMIN' | 'SUPER_ADMIN') ?? 'USER';
-      return session;
-    },
   },
   events: {
     async signIn({ user, isNewUser }) {
