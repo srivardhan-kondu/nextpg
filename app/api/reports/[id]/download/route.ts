@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
-import { requireUserOrThrow, AuthorizationError } from '@/lib/auth/guards';
+import { requireUserOrThrow, AuthorizationError, AccountBlockedError } from '@/lib/auth/guards';
 import { rateLimit } from '@/lib/security/rate-limit';
 import { audit } from '@/lib/security/audit';
 import {
@@ -68,6 +68,9 @@ export async function GET(_request: Request, { params }: { params: Promise<{ id:
       },
     });
   } catch (error) {
+    if (error instanceof AccountBlockedError) {
+      return NextResponse.json({ error: error.message }, { status: 403 });
+    }
     if (error instanceof AuthorizationError) {
       return NextResponse.json({ error: 'Sign in required.' }, { status: 401 });
     }

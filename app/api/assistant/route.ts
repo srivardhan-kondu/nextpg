@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
-import { requireUserOrThrow, AuthorizationError } from '@/lib/auth/guards';
+import { requireUserOrThrow, AuthorizationError, AccountBlockedError } from '@/lib/auth/guards';
 import { rateLimit } from '@/lib/security/rate-limit';
 import { assertSameOrigin } from '@/lib/security/request';
 import { audit } from '@/lib/security/audit';
@@ -54,6 +54,9 @@ export async function POST(request: Request) {
 
     return NextResponse.json({ threadId, answer });
   } catch (error) {
+    if (error instanceof AccountBlockedError) {
+      return NextResponse.json({ error: error.message }, { status: 403 });
+    }
     if (error instanceof AuthorizationError) {
       return NextResponse.json({ error: 'Sign in required.' }, { status: 401 });
     }

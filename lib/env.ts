@@ -27,6 +27,23 @@ const serverSchema = z.object({
   UPSTASH_REDIS_REST_TOKEN: z.string().optional(),
 
   PREDICTION_PROVIDER: z.enum(['rule-based', 'historical', 'ml']).default('rule-based'),
+}).superRefine((values, ctx) => {
+  if (values.NODE_ENV !== 'production') return;
+
+  // Without Upstash, rateLimit() falls back to a per-process Map. On serverless
+  // that is not a weaker limiter, it is effectively no limiter: every instance
+  // keeps its own counter and a cold start resets it. Since that fallback
+  // guards the metered paths (predictions, the OpenAI assistant, payments),
+  // a production boot without it is a misconfiguration, not a degraded mode.
+  if (!values.UPSTASH_REDIS_REST_URL || !values.UPSTASH_REDIS_REST_TOKEN) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ['UPSTASH_REDIS_REST_URL'],
+      message:
+        'UPSTASH_REDIS_REST_URL and UPSTASH_REDIS_REST_TOKEN are required in production — ' +
+        'rate limiting has no distributed backend without them.',
+    });
+  }
 });
 
 const clientSchema = z.object({

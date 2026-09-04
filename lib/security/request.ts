@@ -31,12 +31,29 @@ export async function getRequestContext() {
  */
 export async function assertSameOrigin(): Promise<void> {
   const h = await headers();
-  const origin = h.get('origin');
-  if (!origin) return; // same-origin form posts and server-to-server calls omit it
+
   const allowed = new Set(
     [process.env.NEXT_PUBLIC_APP_URL, process.env.AUTH_URL].filter(Boolean) as string[],
   );
-  if (allowed.size === 0) return;
+  // Fail closed. An empty allowlist means the app is misconfigured, not that
+  // every origin is welcome — waving requests through here is exactly how a
+  // CSRF guard silently stops guarding.
+  if (allowed.size === 0) {
+    throw new Error('Cross-origin check is not configured (set NEXT_PUBLIC_APP_URL).');
+  }
+
+  // Browsers attach Sec-Fetch-Site to every request, including ones that carry
+  // no Origin, so a cross-site POST is rejected here even when Origin is absent.
+  const fetchSite = h.get('sec-fetch-site');
+  if (fetchSite && fetchSite !== 'same-origin' && fetchSite !== 'none') {
+    throw new Error('Cross-origin request rejected.');
+  }
+
+  const origin = h.get('origin');
+  // No Origin and no cross-site signal: a non-browser caller, which carries no
+  // ambient cookie for an attacker to ride. Authentication still gates it.
+  if (!origin) return;
+
   const ok = [...allowed].some((a) => {
     try {
       return new URL(a).origin === new URL(origin).origin;

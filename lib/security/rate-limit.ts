@@ -39,6 +39,17 @@ if (typeof setInterval !== 'undefined') {
   }, 60_000).unref?.();
 }
 
+let warnedMemoryFallback = false;
+
+function warnMemoryFallbackOnce() {
+  if (warnedMemoryFallback) return;
+  warnedMemoryFallback = true;
+  console.error(
+    '[rate-limit] SECURITY: falling back to the in-process limiter in production. ' +
+      'Rate limits are per-instance and are not being enforced. Configure Upstash Redis.',
+  );
+}
+
 let redis: Redis | null = null;
 const limiters = new Map<string, Ratelimit>();
 
@@ -78,7 +89,13 @@ export async function rateLimit(name: RateLimitName, identifier: string): Promis
   const config = RATE_LIMITS[name];
   const limiter = getLimiter(name, config.limit, config.window as `${number} m`);
 
-  if (!limiter) return memoryLimit(`${name}:${identifier}`, config.limit, config.ms);
+  if (!limiter) {
+    // lib/env.ts refuses to boot production without Upstash, so this branch is
+    // dev-only by construction. Warn loudly if that ever stops being true
+    // rather than quietly counting in a map no other instance can see.
+    if (process.env.NODE_ENV === 'production') warnMemoryFallbackOnce();
+    return memoryLimit(`${name}:${identifier}`, config.limit, config.ms);
+  }
 
   const result = await limiter.limit(identifier);
   return {

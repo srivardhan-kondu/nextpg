@@ -16,6 +16,7 @@ interface RazorpayWebhookPayload {
         id?: string;
         order_id?: string;
         method?: string;
+        amount?: number;
         error_code?: string;
         error_description?: string;
       };
@@ -93,12 +94,29 @@ async function handlePaymentCaptured(entity?: {
   id?: string;
   order_id?: string;
   method?: string;
+  amount?: number;
 }) {
   if (!entity?.order_id || !entity.id) return;
 
   const payment = await prisma.payment.findUnique({ where: { razorpayOrderId: entity.order_id } });
   if (!payment) {
     console.warn('[webhook] captured payment for unknown order', entity.order_id);
+    return;
+  }
+
+  // Credits are sold against a fixed pack price. A capture for anything other
+  // than the amount we charged (a partial capture, or a mismatch upstream) must
+  // not buy a full pack, so it is parked for a human rather than granted.
+  // Returning normally keeps the 200: a retry would mismatch identically.
+  if (typeof entity.amount === 'number' && entity.amount !== payment.amount) {
+    await audit({
+      userId: payment.userId,
+      action: 'payment.webhook.amount_mismatch',
+      entityType: 'payment',
+      entityId: payment.id,
+      severity: 'critical',
+      metadata: { orderId: entity.order_id, expected: payment.amount, received: entity.amount },
+    });
     return;
   }
 

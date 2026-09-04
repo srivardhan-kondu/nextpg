@@ -1,3 +1,4 @@
+import { randomUUID } from 'node:crypto';
 import { Prisma } from '@prisma/client';
 import { prisma } from '@/lib/prisma';
 import { CREDITS_PER_REPORT } from '@/config/site';
@@ -157,24 +158,33 @@ export async function adjustCredits(params: {
   adminId: string;
 }) {
   const { userId, delta, reason, adminId } = params;
-  const key = `adjust:${adminId}:${userId}:${Date.now()}`;
+  // Random rather than time-based: two adjustments landing in the same
+  // millisecond would collide on the unique index and roll the second back.
+  const key = `adjust:${adminId}:${userId}:${randomUUID()}`;
 
   return prisma.$transaction(async (tx) => {
-    await tx.predictionCredit.upsert({
+    const account = await tx.predictionCredit.upsert({
       where: { userId },
-      update: { balance: { increment: delta } },
-      create: { userId, balance: Math.max(0, delta), purchased: 0, used: 0 },
+      update: {},
+      create: { userId, balance: 0, purchased: 0, used: 0 },
     });
-    const account = await tx.predictionCredit.findUniqueOrThrow({ where: { userId } });
-    if (account.balance < 0) {
-      await tx.predictionCredit.update({ where: { userId }, data: { balance: 0 } });
-    }
+
+    // A debit larger than the balance is floored instead of driving the account
+    // negative, and the ledger records the credits that actually moved — the
+    // requested delta is kept in the audit metadata.
+    const effectiveDelta = Math.max(delta, -account.balance);
+
+    const updated = await tx.predictionCredit.update({
+      where: { userId },
+      data: { balance: { increment: effectiveDelta } },
+    });
+
     const transaction = await tx.creditTransaction.create({
       data: {
         userId,
         type: 'ADMIN_ADJUSTMENT',
-        amount: delta,
-        balanceAfter: Math.max(0, account.balance),
+        amount: effectiveDelta,
+        balanceAfter: updated.balance,
         description: reason,
         idempotencyKey: key,
       },
@@ -186,7 +196,7 @@ export async function adjustCredits(params: {
         entityType: 'user',
         entityId: userId,
         severity: 'warn',
-        metadata: { delta, reason },
+        metadata: { delta, effectiveDelta, balanceAfter: updated.balance, reason },
       },
     });
     return transaction;

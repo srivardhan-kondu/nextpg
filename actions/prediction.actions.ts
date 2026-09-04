@@ -2,7 +2,7 @@
 
 import { revalidatePath } from 'next/cache';
 import { prisma } from '@/lib/prisma';
-import { requireUserOrThrow, AuthorizationError } from '@/lib/auth/guards';
+import { requireUserOrThrow, AuthorizationError, AccountBlockedError } from '@/lib/auth/guards';
 import { enforceRateLimit, RateLimitError } from '@/lib/security/rate-limit';
 import { getClientIp } from '@/lib/security/request';
 import { audit } from '@/lib/security/audit';
@@ -27,7 +27,8 @@ export async function createPredictionAction(
   let user;
   try {
     user = await requireUserOrThrow();
-  } catch {
+  } catch (error) {
+    if (error instanceof AccountBlockedError) return { status: 'error', message: error.message };
     return { status: 'error', message: 'Please sign in to run a prediction.' };
   }
 
@@ -104,7 +105,8 @@ export async function unlockPredictionAction(
   let user;
   try {
     user = await requireUserOrThrow();
-  } catch {
+  } catch (error) {
+    if (error instanceof AccountBlockedError) return { status: 'error', message: error.message };
     return { status: 'error', message: 'Please sign in to unlock this report.' };
   }
 

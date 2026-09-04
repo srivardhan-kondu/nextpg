@@ -2,7 +2,7 @@
 
 import { revalidatePath } from 'next/cache';
 import { prisma } from '@/lib/prisma';
-import { requireUserOrThrow } from '@/lib/auth/guards';
+import { requireUserOrThrow, AccountBlockedError } from '@/lib/auth/guards';
 import { enforceRateLimit, RateLimitError } from '@/lib/security/rate-limit';
 import { audit } from '@/lib/security/audit';
 import { validateDream } from '@/services/prediction/dream.service';
@@ -30,7 +30,8 @@ export async function validateDreamAction(
   let user;
   try {
     user = await requireUserOrThrow();
-  } catch {
+  } catch (error) {
+    if (error instanceof AccountBlockedError) return { status: 'error', message: error.message };
     return { status: 'error', message: 'Please sign in to validate your dream.' };
   }
 
@@ -130,8 +131,16 @@ export async function validateDreamAction(
   }
 }
 
-/** Autocomplete backing the dream college combobox. */
+/**
+ * Autocomplete backing the dream college combobox.
+ *
+ * Rate-limited on the same bucket as GET /api/colleges/search, which runs the
+ * identical multi-column `contains` query. An exported server action is
+ * directly invocable whether or not the UI happens to call it, so leaving this
+ * one unmetered would be a way around that route's limiter.
+ */
 export async function searchCollegesAction(term: string) {
-  await requireUserOrThrow();
-  return collegeRepository.search(term, 10);
+  const user = await requireUserOrThrow();
+  await enforceRateLimit('search', `user:${user.id}`);
+  return collegeRepository.search(sanitizeText(term, 120), 10);
 }

@@ -55,7 +55,10 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           select: { role: true, isBlocked: true },
         });
         token.role = dbUser?.role ?? 'USER';
-        if (dbUser?.isBlocked) token.blocked = true;
+        // Block state is deliberately NOT carried in the token. It would be a
+        // snapshot from sign-in time, and a block applied mid-session has to
+        // take effect immediately, so the guards read it from the database on
+        // every gated request instead (see lib/auth/guards.ts).
       }
       return token;
     },

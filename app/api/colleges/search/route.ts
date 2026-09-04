@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { collegeRepository } from '@/repositories/college.repository';
-import { requireUserOrThrow, AuthorizationError } from '@/lib/auth/guards';
+import { requireUserOrThrow, AuthorizationError, AccountBlockedError } from '@/lib/auth/guards';
 import { rateLimit } from '@/lib/security/rate-limit';
 
 export const dynamic = 'force-dynamic';
@@ -34,6 +34,9 @@ export async function GET(request: Request) {
     const results = await collegeRepository.search(parsed.data.q, parsed.data.limit);
     return NextResponse.json({ results });
   } catch (error) {
+    if (error instanceof AccountBlockedError) {
+      return NextResponse.json({ error: error.message }, { status: 403 });
+    }
     if (error instanceof AuthorizationError) {
       return NextResponse.json({ error: 'Sign in required.' }, { status: 401 });
     }

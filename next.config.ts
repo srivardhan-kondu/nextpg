@@ -1,8 +1,14 @@
 import type { NextConfig } from 'next';
 
+// React Refresh eval()s modules in development; a production build never does.
+const isDev = process.env.NODE_ENV !== 'production';
+
 const CSP = [
   "default-src 'self'",
-  "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://checkout.razorpay.com https://*.razorpay.com",
+  // 'unsafe-inline' stays for now: Next.js emits an unhashed inline bootstrap
+  // script, and removing it needs a nonce threaded from middleware through the
+  // document. 'unsafe-eval' has no such excuse in a production build.
+  `script-src 'self' 'unsafe-inline'${isDev ? " 'unsafe-eval'" : ''} https://checkout.razorpay.com https://*.razorpay.com`,
   "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
   "font-src 'self' https://fonts.gstatic.com data:",
   "img-src 'self' data: blob: https://lh3.googleusercontent.com https://*.razorpay.com",

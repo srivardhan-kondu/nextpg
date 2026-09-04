@@ -1,7 +1,7 @@
 'use server';
 
 import { revalidatePath } from 'next/cache';
-import { requireUserOrThrow } from '@/lib/auth/guards';
+import { requireUserOrThrow, AccountBlockedError } from '@/lib/auth/guards';
 import { enforceRateLimit, RateLimitError } from '@/lib/security/rate-limit';
 import { audit } from '@/lib/security/audit';
 import { prisma } from '@/lib/prisma';
@@ -29,7 +29,8 @@ export async function createOrderAction(): Promise<OrderState> {
   let user;
   try {
     user = await requireUserOrThrow();
-  } catch {
+  } catch (error) {
+    if (error instanceof AccountBlockedError) return { status: 'error', message: error.message };
     return { status: 'error', message: 'Please sign in to buy credits.' };
   }
 
@@ -87,7 +88,8 @@ export async function verifyPaymentAction(input: {
   let user;
   try {
     user = await requireUserOrThrow();
-  } catch {
+  } catch (error) {
+    if (error instanceof AccountBlockedError) return { status: 'error', message: error.message };
     return { status: 'error', message: 'Please sign in.' };
   }
 
