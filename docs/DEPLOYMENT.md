@@ -30,15 +30,21 @@ Target stack: **Vercel** (app) + **Neon PostgreSQL** (database) + **Upstash Redi
 openssl rand -base64 32   # → AUTH_SECRET
 ```
 
-**Google OAuth** (optional): create an OAuth client in Google Cloud Console → Credentials → Web application. Authorised redirect URI:
+**Google is the only sign-in method, and it is required.** There is no email/password login and no separate signup — a first Google sign-in creates the account.
+
+Create an OAuth client in Google Cloud Console → APIs & Services → Credentials → OAuth client ID → **Web application**. Set the authorised redirect URI to exactly:
 
 ```
 https://yourdomain.in/api/auth/callback/google
 ```
 
-**Email OTP** (optional): any SMTP provider works. Without `EMAIL_SERVER_HOST` and `EMAIL_FROM` the OTP flow is hidden, and in development codes are printed to the server console instead of sent.
+No trailing slash, and the scheme must match. Add `http://localhost:3000/api/auth/callback/google` too if you develop locally — Google permits plain `http` only for localhost.
 
-Both providers are optional individually, but **at least one must be configured** or nobody can sign in.
+Authorised JavaScript origins can be left empty: NextAuth uses a server-side flow.
+
+Finally, check the **OAuth consent screen**. While its publishing status is *Testing*, only Google accounts listed under **Test users** can sign in. Publish the app before launch, or your users will be silently rejected.
+
+Without `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET` the login page renders an explicit "sign-in is unavailable" notice rather than a dead button — but nobody can get in.
 
 ---
 

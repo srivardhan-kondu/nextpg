@@ -16,7 +16,14 @@ npm run db:seed                # branches, colleges, quota rules, representative
 npm run dev
 ```
 
-Open [localhost:3000](http://localhost:3000). Sign in with email OTP — without SMTP configured the code is printed to the server console.
+Open [localhost:3000](http://localhost:3000).
+
+**Sign-in requires Google OAuth.** It is the only method — there is no
+email/password login and no separate signup, since a first Google sign-in
+creates the account. Create a Web application OAuth client in Google Cloud
+Console with the redirect URI `http://localhost:3000/api/auth/callback/google`,
+then set `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET`. Without them the login
+page says so rather than offering a dead button.
 
 To reach the admin panel, sign in once, then:
 
@@ -55,7 +62,8 @@ Running a prediction is **free**: you see your rank range, confidence and opport
 | `npm run dev` | Development server |
 | `npm run build` | Production build (runs `prisma generate` first) |
 | `npm run typecheck` | `tsc --noEmit` |
-| `npm test` | Vitest suite |
+| `npm test` | Unit + integration (Vitest) |
+| `npm run test:e2e` | End-to-end in a real browser (Playwright) |
 | `npm run db:push` | Push schema without a migration (development) |
 | `npm run db:migrate` | Create and apply a migration |
 | `npm run db:deploy` | Apply migrations (production) |
@@ -118,8 +126,7 @@ Every integration is optional and degrades gracefully — the UI hides what is n
 
 | Unset | Effect |
 |---|---|
-| `GOOGLE_CLIENT_*` | Google sign-in button hidden |
-| `EMAIL_SERVER_*` | OTP flow hidden; codes logged to console in development |
+| `GOOGLE_CLIENT_*` | **Nobody can sign in** — the login page explains why |
 | `RAZORPAY_*` | Checkout replaced with a configuration notice |
 | `OPENAI_API_KEY` | Counseling assistant panel hidden |
 | `UPSTASH_REDIS_*` | Rate limiting falls back to in-process — **not production-safe** |

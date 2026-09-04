@@ -27,7 +27,7 @@ export function AppSidebarContent({ balance, variant = 'app' }: AppSidebarProps)
         <SidebarNav items={items} />
         {variant === 'admin' ? (
           <div className="mt-6 border-t border-border pt-4">
-            <SidebarNav items={[{ href: '/dashboard', label: 'Back to app', icon: appNav[0]!.icon }]} />
+            <SidebarNav items={[{ href: '/dashboard', label: 'Back to app', icon: 'dashboard' }]} />
           </div>
         ) : null}
       </div>

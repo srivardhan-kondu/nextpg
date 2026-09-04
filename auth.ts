@@ -1,12 +1,9 @@
 import NextAuth, { type DefaultSession } from 'next-auth';
 import { PrismaAdapter } from '@auth/prisma-adapter';
 import Google from 'next-auth/providers/google';
-import Credentials from 'next-auth/providers/credentials';
-import { z } from 'zod';
 
 import { prisma } from '@/lib/prisma';
 import { authConfig } from '@/auth.config';
-import { verifyOtp } from '@/lib/auth/otp';
 import { ensureCreditAccount } from '@/services/credit.service';
 
 declare module 'next-auth' {
@@ -15,16 +12,14 @@ declare module 'next-auth' {
   }
 }
 
-const otpSchema = z.object({
-  email: z.string().email(),
-  otp: z.string().regex(/^\d{6}$/),
-});
-
 /**
- * Session strategy is JWT rather than database-backed: the OTP flow uses a
- * Credentials provider, which NextAuth only supports with JWT sessions. The
- * Prisma adapter still owns user + OAuth account persistence, and the `sessions`
- * table is retained for adapter compatibility and session auditing.
+ * Google is the only sign-in method. There is no separate signup: a first
+ * Google sign-in creates the account.
+ *
+ * Session strategy stays JWT even though the Credentials provider is gone.
+ * Middleware runs at the edge and cannot query Prisma, so the role has to
+ * travel in the token for the /admin gate to work at all. Every admin page then
+ * re-reads the role from the database before trusting it.
  */
 export const { handlers, auth, signIn, signOut } = NextAuth({
   ...authConfig,
@@ -39,31 +34,6 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           }),
         ]
       : []),
-    Credentials({
-      id: 'email-otp',
-      name: 'Email OTP',
-      credentials: { email: {}, otp: {} },
-      async authorize(raw) {
-        const parsed = otpSchema.safeParse(raw);
-        if (!parsed.success) return null;
-
-        const { email, otp } = parsed.data;
-        const verdict = await verifyOtp(email, otp);
-        if (verdict !== 'valid') return null;
-
-        const normalized = email.toLowerCase();
-        const user = await prisma.user.upsert({
-          where: { email: normalized },
-          update: { emailVerified: new Date(), lastLogin: new Date() },
-          create: { email: normalized, emailVerified: new Date(), lastLogin: new Date() },
-        });
-
-        if (user.isBlocked) return null;
-        await ensureCreditAccount(user.id);
-
-        return { id: user.id, email: user.email, name: user.name, image: user.image };
-      },
-    }),
   ],
   callbacks: {
     ...authConfig.callbacks,

@@ -2,8 +2,30 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import {
+  BarChart3, Building2, CreditCard, FileText, GitBranch, LayoutDashboard, ScrollText,
+  Shield, Sparkles, Target, Upload, User, Users, Wallet, type LucideIcon,
+} from 'lucide-react';
 import { cn } from '@/lib/utils';
-import type { NavItem } from './nav-items';
+import type { NavIcon, NavItem } from './nav-items';
+
+/** Resolves the serialisable icon key from nav-items to a real component. */
+const ICONS: Record<NavIcon, LucideIcon> = {
+  dashboard: LayoutDashboard,
+  target: Target,
+  sparkles: Sparkles,
+  'file-text': FileText,
+  'credit-card': CreditCard,
+  user: User,
+  'bar-chart': BarChart3,
+  building: Building2,
+  'git-branch': GitBranch,
+  scroll: ScrollText,
+  shield: Shield,
+  users: Users,
+  wallet: Wallet,
+  upload: Upload,
+};
 
 export function SidebarNav({ items, onNavigate }: { items: NavItem[]; onNavigate?: () => void }) {
   const pathname = usePathname();
@@ -16,6 +38,8 @@ export function SidebarNav({ items, onNavigate }: { items: NavItem[]; onNavigate
           item.href === '/dashboard' || item.href === '/admin'
             ? pathname === item.href
             : pathname === item.href || pathname.startsWith(`${item.href}/`);
+
+        const Icon = ICONS[item.icon];
 
         return (
           <Link
@@ -30,7 +54,7 @@ export function SidebarNav({ items, onNavigate }: { items: NavItem[]; onNavigate
                 : 'text-muted-foreground hover:bg-muted hover:text-foreground',
             )}
           >
-            <item.icon className="h-4 w-4 shrink-0" aria-hidden />
+            <Icon className="h-4 w-4 shrink-0" aria-hidden />
             <span className="truncate">{item.label}</span>
           </Link>
         );

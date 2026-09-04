@@ -8,7 +8,9 @@ Work top to bottom. Anything marked **blocking** must be true before you take re
 - [ ] **blocking** `DATABASE_URL` uses Neon's **pooled** endpoint; `DIRECT_URL` uses the direct one
 - [ ] **blocking** `NEXT_PUBLIC_APP_URL` and `AUTH_URL` are the production origin, with `https://`
 - [ ] **blocking** `SKIP_ENV_VALIDATION` is unset in the runtime environment
-- [ ] At least one auth provider is configured (Google OAuth or SMTP for OTP)
+- [ ] **blocking** `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET` set — Google is the only way in
+- [ ] **blocking** OAuth consent screen **published**, not left in *Testing* (in Testing, only listed test users can sign in)
+- [ ] Redirect URI in Google Cloud matches production exactly, with `https` and no trailing slash
 - [ ] `/api/health` returns `status: "ok"` with every check passing
 
 ## Rate limiting

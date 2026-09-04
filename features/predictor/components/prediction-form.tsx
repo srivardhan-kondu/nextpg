@@ -98,6 +98,11 @@ export function PredictionForm({ defaults }: PredictionFormProps) {
   }
 
   async function onSubmit(values: CreatePredictionInput) {
+    // Blocks a stray Enter keypress on an earlier step from submitting a
+    // half-filled form. The click path cannot reach here early — see the
+    // footer button below.
+    if (step < STEPS.length) return;
+
     setSubmitting(true);
 
     const formData = new FormData();
@@ -356,13 +361,25 @@ export function PredictionForm({ defaults }: PredictionFormProps) {
           Back
         </Button>
 
+        {/*
+          * Both footer buttons are type="button" on purpose.
+          *
+          * Continue and the final action occupy the same position, and React
+          * flushes the step change synchronously during the discrete click
+          * event. With a type="submit" here, the browser would evaluate the
+          * click's default action against the *replacement* button and fire a
+          * native submit the instant the user reached the last step — skipping
+          * it entirely and discarding their college preference. Submitting
+          * explicitly removes the native default action from the click path;
+          * the form's onSubmit still handles Enter.
+          */}
         {step < STEPS.length ? (
           <Button type="button" size="lg" onClick={next}>
             Continue
             <ArrowRight aria-hidden />
           </Button>
         ) : (
-          <Button type="submit" size="lg" loading={submitting}>
+          <Button type="button" size="lg" loading={submitting} onClick={handleSubmit(onSubmit)}>
             <Sparkles aria-hidden />
             Predict my rank
           </Button>

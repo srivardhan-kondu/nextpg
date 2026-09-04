@@ -16,12 +16,6 @@ const serverSchema = z.object({
   GOOGLE_CLIENT_ID: z.string().optional(),
   GOOGLE_CLIENT_SECRET: z.string().optional(),
 
-  EMAIL_SERVER_HOST: z.string().optional(),
-  EMAIL_SERVER_PORT: z.coerce.number().optional(),
-  EMAIL_SERVER_USER: z.string().optional(),
-  EMAIL_SERVER_PASSWORD: z.string().optional(),
-  EMAIL_FROM: z.string().optional(),
-
   RAZORPAY_KEY_ID: z.string().optional(),
   RAZORPAY_KEY_SECRET: z.string().optional(),
   RAZORPAY_WEBHOOK_SECRET: z.string().optional(),
@@ -79,9 +73,6 @@ export const env: z.infer<typeof serverSchema> = new Proxy({} as z.infer<typeof 
 export const features = {
   get google() {
     return Boolean(process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET);
-  },
-  get emailOtp() {
-    return Boolean(process.env.EMAIL_SERVER_HOST && process.env.EMAIL_FROM);
   },
   get razorpay() {
     return Boolean(process.env.RAZORPAY_KEY_ID && process.env.RAZORPAY_KEY_SECRET);

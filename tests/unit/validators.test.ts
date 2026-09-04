@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { createPredictionSchema, dreamValidationSchema } from '@/validators/prediction.schema';
-import { emailSchema, otpVerifySchema, profileSchema } from '@/validators/auth.schema';
+import { profileSchema } from '@/validators/auth.schema';
 import { verifyPaymentSchema } from '@/validators/payment.schema';
 import { EXAM } from '@/config/site';
 
@@ -85,24 +85,19 @@ describe('dreamValidationSchema', () => {
   });
 });
 
-describe('auth schemas', () => {
-  it('normalises email to lowercase', () => {
-    const result = emailSchema.safeParse({ email: '  Aditi@Example.COM ' });
-    expect(result.success).toBe(true);
-    if (result.success) expect(result.data.email).toBe('aditi@example.com');
-  });
-
-  it('requires exactly six digits for an OTP', () => {
-    expect(otpVerifySchema.safeParse({ email: 'a@b.com', otp: '12345' }).success).toBe(false);
-    expect(otpVerifySchema.safeParse({ email: 'a@b.com', otp: '1234567' }).success).toBe(false);
-    expect(otpVerifySchema.safeParse({ email: 'a@b.com', otp: 'abcdef' }).success).toBe(false);
-    expect(otpVerifySchema.safeParse({ email: 'a@b.com', otp: '123456' }).success).toBe(true);
-  });
-
+describe('profileSchema', () => {
   it('validates Indian mobile numbers', () => {
     expect(profileSchema.safeParse({ phone: '9876543210' }).success).toBe(true);
     expect(profileSchema.safeParse({ phone: '1234567890' }).success).toBe(false);
     expect(profileSchema.safeParse({ phone: '' }).success).toBe(true);
+  });
+
+  it('rejects an overlong name', () => {
+    expect(profileSchema.safeParse({ name: 'a'.repeat(200) }).success).toBe(false);
+  });
+
+  it('accepts an empty profile — every field is optional', () => {
+    expect(profileSchema.safeParse({}).success).toBe(true);
   });
 });
 

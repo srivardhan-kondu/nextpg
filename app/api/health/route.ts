@@ -22,7 +22,6 @@ export async function GET() {
     checks: {
       database,
       google: features.google,
-      emailOtp: features.emailOtp,
       razorpay: features.razorpay,
       assistant: features.assistant,
       distributedRateLimit: features.distributedRateLimit,

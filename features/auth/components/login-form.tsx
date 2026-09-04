@@ -1,20 +1,12 @@
 'use client';
 
 import * as React from 'react';
-import { useActionState } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useSearchParams } from 'next/navigation';
 import { signIn } from 'next-auth/react';
-import { toast } from 'sonner';
-import { ArrowLeft, Mail } from 'lucide-react';
+import { AlertTriangle } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Separator } from '@/components/ui/separator';
-import { requestOtpAction, type ActionState } from '@/actions/auth.actions';
-import { OTP_LENGTH } from '@/lib/auth/otp-constants';
-
-const initialState: ActionState = { ok: false };
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 
 function GoogleIcon() {
   return (
@@ -27,135 +19,65 @@ function GoogleIcon() {
   );
 }
 
+const ERROR_MESSAGES: Record<string, string> = {
+  OAuthAccountNotLinked: 'That email is already registered through a different sign-in method.',
+  AccessDenied: 'This account cannot sign in. If you think that is wrong, contact support.',
+  Configuration: 'Sign-in is not configured correctly. Please contact support.',
+};
+
+/**
+ * Google is the only sign-in method, and it doubles as signup — a first
+ * sign-in creates the account. There is deliberately no email/password form.
+ */
 export function LoginForm({ googleEnabled }: { googleEnabled: boolean }) {
-  const router = useRouter();
   const searchParams = useSearchParams();
   const callbackUrl = searchParams.get('callbackUrl') ?? '/dashboard';
+  const error = searchParams.get('error');
+  const [pending, setPending] = React.useState(false);
 
-  const [state, formAction, isPending] = useActionState(requestOtpAction, initialState);
-  const [stage, setStage] = React.useState<'email' | 'otp'>('email');
-  const [email, setEmail] = React.useState('');
-  const [otp, setOtp] = React.useState('');
-  const [verifying, setVerifying] = React.useState(false);
-  const [otpError, setOtpError] = React.useState<string | null>(null);
-
-  React.useEffect(() => {
-    if (state.ok && state.message) {
-      toast.success(state.message);
-      setStage('otp');
-    } else if (!state.ok && state.message) {
-      toast.error(state.message);
-    }
-  }, [state]);
-
-  async function verify(event: React.FormEvent) {
-    event.preventDefault();
-    setOtpError(null);
-    setVerifying(true);
-
-    const result = await signIn('email-otp', { email, otp, redirect: false });
-
-    setVerifying(false);
-    if (result?.error) {
-      setOtpError('That code is incorrect or has expired. Request a new one if needed.');
-      return;
-    }
-    router.push(callbackUrl);
-    router.refresh();
-  }
-
-  if (stage === 'otp') {
+  if (!googleEnabled) {
     return (
-      <form onSubmit={verify} className="space-y-4">
-        <button
-          type="button"
-          onClick={() => { setStage('email'); setOtp(''); setOtpError(null); }}
-          className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground"
-        >
-          <ArrowLeft className="h-3.5 w-3.5" /> Use a different email
-        </button>
-
-        <div className="space-y-2">
-          <Label htmlFor="otp">Enter the {OTP_LENGTH}-digit code</Label>
-          <Input
-            id="otp"
-            name="otp"
-            inputMode="numeric"
-            autoComplete="one-time-code"
-            maxLength={OTP_LENGTH}
-            required
-            autoFocus
-            value={otp}
-            onChange={(e) => setOtp(e.target.value.replace(/\D/g, ''))}
-            aria-invalid={Boolean(otpError)}
-            aria-describedby={otpError ? 'otp-error' : 'otp-hint'}
-            className="text-center text-lg font-semibold tracking-[0.5em]"
-            placeholder="000000"
-          />
-          {otpError ? (
-            <p id="otp-error" role="alert" className="text-sm text-destructive">{otpError}</p>
-          ) : (
-            <p id="otp-hint" className="text-sm text-muted-foreground">
-              Sent to <span className="font-medium text-foreground">{email}</span>
-            </p>
-          )}
-        </div>
-
-        <Button type="submit" size="lg" className="w-full" loading={verifying} disabled={otp.length !== OTP_LENGTH}>
-          Verify &amp; continue
-        </Button>
-      </form>
+      <Alert variant="warning">
+        <AlertTriangle aria-hidden />
+        <AlertTitle>Sign-in is unavailable</AlertTitle>
+        <AlertDescription>
+          Google sign-in is not configured on this deployment. Set GOOGLE_CLIENT_ID and
+          GOOGLE_CLIENT_SECRET to enable it.
+        </AlertDescription>
+      </Alert>
     );
   }
 
   return (
     <div className="space-y-4">
-      {googleEnabled ? (
-        <>
-          <Button
-            type="button"
-            variant="outline"
-            size="lg"
-            className="w-full"
-            onClick={() => signIn('google', { callbackUrl })}
-          >
-            <GoogleIcon /> Continue with Google
-          </Button>
-          <div className="relative">
-            <Separator />
-            <span className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 bg-background px-3 text-xs text-muted-foreground">
-              or
-            </span>
-          </div>
-        </>
+      {error ? (
+        <Alert variant="destructive">
+          <AlertTriangle aria-hidden />
+          <AlertTitle>Could not sign you in</AlertTitle>
+          <AlertDescription>
+            {ERROR_MESSAGES[error] ?? 'Something went wrong. Please try again.'}
+          </AlertDescription>
+        </Alert>
       ) : null}
 
-      <form action={formAction} className="space-y-4">
-        <div className="space-y-2">
-          <Label htmlFor="email">Email address</Label>
-          <Input
-            id="email"
-            name="email"
-            type="email"
-            autoComplete="email"
-            required
-            placeholder="you@example.com"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            aria-invalid={Boolean(state.fieldErrors?.email)}
-            aria-describedby={state.fieldErrors?.email ? 'email-error' : undefined}
-          />
-          {state.fieldErrors?.email ? (
-            <p id="email-error" role="alert" className="text-sm text-destructive">
-              {state.fieldErrors.email[0]}
-            </p>
-          ) : null}
-        </div>
+      <Button
+        type="button"
+        variant="outline"
+        size="lg"
+        className="w-full"
+        loading={pending}
+        onClick={() => {
+          setPending(true);
+          void signIn('google', { callbackUrl });
+        }}
+      >
+        {pending ? null : <GoogleIcon />}
+        Continue with Google
+      </Button>
 
-        <Button type="submit" size="lg" className="w-full" loading={isPending}>
-          <Mail /> Send login code
-        </Button>
-      </form>
+      <p className="text-center text-sm text-muted-foreground">
+        No password to remember. Your first sign-in creates your account.
+      </p>
     </div>
   );
 }

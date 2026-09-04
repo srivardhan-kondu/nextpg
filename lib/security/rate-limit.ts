@@ -62,10 +62,8 @@ function getLimiter(name: string, limit: number, window: `${number} ${'s' | 'm' 
   return limiters.get(name)!;
 }
 
-/** Tuned per surface: OTP is the most abusable, so it is the tightest. */
+/** Tuned per surface: the paid and LLM-backed paths are the tightest. */
 export const RATE_LIMITS = {
-  otpRequest: { limit: 4, window: '10 m', ms: 600_000 },
-  otpVerify: { limit: 10, window: '10 m', ms: 600_000 },
   prediction: { limit: 20, window: '1 h', ms: 3_600_000 },
   dreamValidation: { limit: 40, window: '1 h', ms: 3_600_000 },
   payment: { limit: 10, window: '1 h', ms: 3_600_000 },
