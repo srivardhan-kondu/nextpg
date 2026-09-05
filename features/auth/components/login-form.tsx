@@ -3,7 +3,7 @@
 import * as React from 'react';
 import { useSearchParams } from 'next/navigation';
 import { signIn } from 'next-auth/react';
-import { AlertTriangle, Eye, EyeOff, ClipboardCopy, Check } from 'lucide-react';
+import { AlertTriangle, Eye, EyeOff } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 
@@ -25,34 +25,7 @@ const ERROR_MESSAGES: Record<string, string> = {
   CredentialsSignin: 'Incorrect email or password. Please try again.',
 };
 
-const TEST_EMAIL = 'test@nextpg.in';
-const TEST_PASSWORD = 'TestUser@2026';
 
-/** One-click copy chip for the test credentials banner */
-function CopyChip({ value, label }: { value: string; label: string }) {
-  const [copied, setCopied] = React.useState(false);
-  const copy = () => {
-    void navigator.clipboard.writeText(value);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
-  };
-  return (
-    <button
-      type="button"
-      onClick={copy}
-      className="flex items-center gap-1.5 rounded-[6px] border border-[#cfdedb] bg-white px-2.5 py-[7px] text-[12.5px] font-mono text-[#0b544e] transition-colors hover:bg-[#e8f1ef]"
-      title={`Copy ${label}`}
-    >
-      <span className="select-none text-[10.5px] leading-none text-[#6b7472] mr-0.5">{label}:</span>
-      <span className="font-medium">{value}</span>
-      {copied ? (
-        <Check className="h-3 w-3 text-[#10736b] shrink-0" />
-      ) : (
-        <ClipboardCopy className="h-3 w-3 text-[#838c8a] shrink-0" />
-      )}
-    </button>
-  );
-}
 
 /**
  * Login form — supports Google OAuth and test credentials (for Razorpay review).
@@ -89,22 +62,7 @@ export function LoginForm({ googleEnabled }: { googleEnabled: boolean }) {
         </Alert>
       ) : null}
 
-      {/* ── Test credentials banner ── */}
-      <div className="flex flex-col gap-2.5 rounded-[10px] border border-[#cfdedb] bg-[#f4f7f6] p-3.5">
-        <div className="flex items-center gap-2">
-          <span className="h-[6px] w-[6px] rounded-full bg-[#10736b]" aria-hidden />
-          <span className="text-[12px] font-medium leading-none text-[#0b544e]">
-            Test account — for reviewer access
-          </span>
-        </div>
-        <div className="flex flex-wrap gap-2">
-          <CopyChip label="Email" value={TEST_EMAIL} />
-          <CopyChip label="Password" value={TEST_PASSWORD} />
-        </div>
-        <p className="text-[11.5px] leading-relaxed text-[#6b7472]">
-          Comes pre-loaded with 5 credits and a sample prediction.
-        </p>
-      </div>
+
 
       {/* ── Email / Password form ── */}
       <form id="credentials-form" onSubmit={handleCredentials} className="flex flex-col gap-3">
@@ -119,7 +77,7 @@ export function LoginForm({ googleEnabled }: { googleEnabled: boolean }) {
             required
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            placeholder={TEST_EMAIL}
+            placeholder="you@example.com"
             className="flex h-[44px] w-full rounded-[8px] border border-black/[0.16] bg-white px-[14px] text-[14.5px] leading-none text-[#15191a] placeholder:text-[#838c8a] focus:border-[#10736b] focus:outline-none focus:ring-1 focus:ring-[#10736b]"
           />
         </div>
