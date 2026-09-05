@@ -1,3 +1,4 @@
+import { cache } from 'react';
 import { redirect } from 'next/navigation';
 import { auth } from '@/auth';
 import { prisma } from '@/lib/prisma';
@@ -21,10 +22,10 @@ export class AccountBlockedError extends AuthorizationError {
   }
 }
 
-export async function getCurrentUser() {
+export const getCurrentUser = cache(async () => {
   const session = await auth();
   return session?.user ?? null;
-}
+});
 
 /**
  * Authoritative account state, read from the database on every gated request.
@@ -34,12 +35,12 @@ export async function getCurrentUser() {
  * until it expires. Anything that decides access therefore resolves status
  * here rather than trusting the claim it was handed.
  */
-async function loadAccountStatus(userId: string) {
+const loadAccountStatus = cache(async (userId: string) => {
   return prisma.user.findUnique({
     where: { id: userId },
     select: { role: true, isBlocked: true },
   });
-}
+});
 
 /**
  * Server-side gate for pages: bounces to login preserving the intended path.

@@ -45,5 +45,12 @@ export default auth((req: NextRequest & { auth: unknown }) => {
 });
 
 export const config = {
-  matcher: ['/((?!api/auth|api/webhooks|_next/static|_next/image|favicon.ico|.*\\.(?:png|jpg|jpeg|svg|gif|webp|ico)$).*)'],
+  // sitemap.xml, robots.txt, the generated icon/OG image and the public cutoff
+  // pages are crawler-facing and identical for everyone. Running the auth
+  // middleware over them costs a session lookup per request and attaches a
+  // Set-Cookie, which makes the CDN treat the response as private and stop
+  // caching it — on the one part of the site built to be crawled at scale.
+  matcher: [
+    '/((?!api/auth|api/webhooks|_next/static|_next/image|favicon.ico|sitemap.xml|robots.txt|opengraph-image|icon|manifest.webmanifest|neet-pg-cutoffs|.*\\.(?:png|jpg|jpeg|svg|gif|webp|ico)$).*)',
+  ],
 };

@@ -18,6 +18,7 @@ import { BranchRecommendations } from '@/features/predictor/components/branch-re
 import { StrategyNotes } from '@/features/predictor/components/strategy-notes';
 import { OpportunityTable } from '@/features/predictor/components/opportunity-table';
 import { Paywall } from '@/features/predictor/components/paywall';
+import { DreamTeaser } from '@/features/predictor/components/dream-teaser';
 import { CounselingAssistant } from '@/features/assistant/components/counseling-assistant';
 import { CATEGORY_LABEL } from '@/lib/constants';
 import { formatDateTime } from '@/lib/utils';
@@ -96,7 +97,10 @@ export default async function PredictionResultPage({ params }: { params: Promise
       />
 
       {view.locked ? (
-        <Paywall predictionId={prediction.id} balance={credit.balance} teaser={view.teaser} />
+        <>
+          <Paywall predictionId={prediction.id} balance={credit.balance} teaser={view.teaser} />
+          <DreamTeaser predictionId={prediction.id} locked balance={credit.balance} />
+        </>
       ) : (
         <>
           <Card>
@@ -157,6 +161,8 @@ export default async function PredictionResultPage({ params }: { params: Promise
               <OpportunityTable rows={result.recommendedColleges} />
             </CardContent>
           </Card>
+
+          <DreamTeaser predictionId={prediction.id} locked={false} />
 
           <Card>
             <CardHeader>

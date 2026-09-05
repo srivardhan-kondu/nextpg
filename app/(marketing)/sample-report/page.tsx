@@ -1,8 +1,8 @@
-import type { Metadata } from 'next';
 import Link from 'next/link';
 import { ArrowRight, Check } from 'lucide-react';
 
 import { siteConfig, pricing, PREDICTION_DISCLAIMER } from '@/config/site';
+import { pageMetadata } from '@/lib/seo/metadata';
 import { MarketingHeader } from '@/features/landing/components/marketing-header';
 import { MarketingFooter } from '@/features/landing/components/marketing-footer';
 import { auth } from '@/auth';
@@ -17,10 +17,14 @@ import { BranchRecommendations } from '@/features/predictor/components/branch-re
 import { StrategyNotes } from '@/features/predictor/components/strategy-notes';
 import { SAMPLE_REPORT } from '@/features/landing/sample-data';
 
-export const metadata: Metadata = {
-  title: 'Sample Report',
-  description: `See exactly what a ${siteConfig.brand} report contains before you buy a single credit.`,
-};
+export const metadata = pageMetadata({
+  title: 'NEET PG Predictor Sample Report — What You Actually Get',
+  description:
+    `See a complete ${siteConfig.brand} report before you buy a credit: estimated rank range, ` +
+    'AIQ and state quota opportunities, dream branch and college validation, and counselling strategy.',
+  path: '/sample-report',
+  keywords: ['NEET PG predictor report', 'NEET PG counselling report sample'],
+});
 
 const SECTIONS = [
   'Profile summary', 'Prediction summary', 'Estimated rank analysis', 'AIQ opportunities',

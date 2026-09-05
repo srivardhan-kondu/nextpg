@@ -86,14 +86,18 @@ export function Hero() {
           </div>
 
           {/* Headline */}
-          <h1 className="m-0 max-w-[15ch] text-[54px] font-normal leading-[1.06] tracking-[-0.028em] text-[#15191a]">
-            Know your PG possibilities in 60 seconds
+          {/* The H1 carries "NEET PG" deliberately: it is the strongest on-page
+              relevance signal Google reads, and the original headline shared no
+              vocabulary with a single query this page competes for. */}
+          <h1 className="m-0 max-w-[17ch] text-[54px] font-normal leading-[1.06] tracking-[-0.028em] text-[#15191a]">
+            Know your NEET PG possibilities in 60 seconds
           </h1>
 
           {/* Sub-copy */}
           <p className="m-0 max-w-[46ch] text-[17.5px] leading-[1.55] text-[#4e5654]">
-            Rank estimates, branch validation, college recommendations, AIQ insight and state quota
-            opportunities — from the score you already have in your head.
+            A NEET PG rank predictor and college predictor in one: rank estimates, branch
+            validation, college recommendations, AIQ insight and state quota opportunities — from
+            the score you already have in your head.
           </p>
 
           {/* CTA buttons */}

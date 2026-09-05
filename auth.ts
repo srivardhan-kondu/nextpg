@@ -1,6 +1,7 @@
 import NextAuth, { type DefaultSession } from 'next-auth';
 import { PrismaAdapter } from '@auth/prisma-adapter';
 import Google from 'next-auth/providers/google';
+import Credentials from 'next-auth/providers/credentials';
 
 import { prisma } from '@/lib/prisma';
 import { authConfig } from '@/auth.config';
@@ -34,6 +35,43 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           }),
         ]
       : []),
+    // ── Test / demo credentials for Razorpay reviewer access ──
+    Credentials({
+      id: 'test-credentials',
+      name: 'Test Account',
+      credentials: {
+        email: { label: 'Email', type: 'email' },
+        password: { label: 'Password', type: 'password' },
+      },
+      async authorize(credentials) {
+        const TEST_EMAIL = 'test@nextpg.in';
+        const TEST_PASSWORD = 'TestUser@2026';
+        if (
+          credentials?.email === TEST_EMAIL &&
+          credentials?.password === TEST_PASSWORD
+        ) {
+          // Find or create the test user in the database
+          let user = await prisma.user.findUnique({ where: { email: TEST_EMAIL } });
+          if (!user) {
+            user = await prisma.user.create({
+              data: {
+                email: TEST_EMAIL,
+                name: 'Test Reviewer',
+                role: 'USER',
+              },
+            });
+            await ensureCreditAccount(user.id);
+            // Seed 5 free credits for the test account
+            await prisma.predictionCredit.update({
+              where: { userId: user.id },
+              data: { balance: 5 },
+            });
+          }
+          return { id: user.id, email: user.email, name: user.name };
+        }
+        return null;
+      },
+    }),
   ],
   callbacks: {
     ...authConfig.callbacks,

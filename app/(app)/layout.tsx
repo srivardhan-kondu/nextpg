@@ -5,8 +5,10 @@ import { AppHeader } from '@/components/layout/app-header';
 
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
   const user = await requireUser();
-  await ensureCreditAccount(user.id);
-  const credit = await getBalance(user.id);
+  const [, credit] = await Promise.all([
+    ensureCreditAccount(user.id),
+    getBalance(user.id),
+  ]);
 
   const sidebar = <AppSidebarContent balance={credit.balance} />;
 

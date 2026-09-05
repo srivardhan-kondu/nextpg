@@ -1,15 +1,8 @@
-'use client';
+import { Check, Infinity as InfinityIcon, Lock, RotateCcw } from 'lucide-react';
 
-import * as React from 'react';
-import Link from 'next/link';
-import { useRouter } from 'next/navigation';
-import { toast } from 'sonner';
-import { Check, CreditCard, Infinity as InfinityIcon, Lock, RotateCcw, Unlock } from 'lucide-react';
-
-import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { unlockPredictionAction } from '@/actions/prediction.actions';
 import { pricing, PER_REPORT_LABEL } from '@/config/site';
+import { UnlockButton } from './unlock-button';
 
 const LOCKED_FEATURES = [
   'Every matching college, ranked by reachability',
@@ -43,29 +36,7 @@ interface PaywallProps {
  * scarcity — a student deciding whether to spend money deserves the real terms.
  */
 export function Paywall({ predictionId, balance, teaser }: PaywallProps) {
-  const router = useRouter();
-  const [pending, setPending] = React.useState(false);
   const hasCredits = balance > 0;
-
-  async function unlock() {
-    setPending(true);
-    const formData = new FormData();
-    formData.append('predictionId', predictionId);
-
-    const result = await unlockPredictionAction({ status: 'idle' }, formData);
-
-    if (result.status === 'success') {
-      toast.success('Report unlocked. It is yours forever.');
-      router.refresh();
-      return;
-    }
-
-    setPending(false);
-    if (result.status === 'error') {
-      toast.error(result.message);
-      if (result.needsCredits) router.push('/credits');
-    }
-  }
 
   return (
     <Card className="overflow-hidden border-primary/25 bg-gradient-to-b from-primary-soft/60 to-card">
@@ -127,19 +98,7 @@ export function Paywall({ predictionId, balance, teaser }: PaywallProps) {
               )}
             </div>
 
-            {hasCredits ? (
-              <Button size="lg" onClick={unlock} loading={pending} className="shrink-0">
-                <Unlock aria-hidden />
-                Unlock full report
-              </Button>
-            ) : (
-              <Button asChild size="lg" className="shrink-0">
-                <Link href={`/credits?next=${encodeURIComponent(`/predictor/${predictionId}`)}`}>
-                  <CreditCard aria-hidden />
-                  Unlock for {pricing.amountLabel}
-                </Link>
-              </Button>
-            )}
+            <UnlockButton predictionId={predictionId} balance={balance} className="shrink-0" />
           </div>
 
           {/* Risk reversal. Both lines match the published refund policy. */}

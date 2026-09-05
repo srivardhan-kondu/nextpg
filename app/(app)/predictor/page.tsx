@@ -38,8 +38,9 @@ export default async function PredictorPage() {
           <h1 className="text-[27px] font-normal leading-[1.2] tracking-[-0.02em] text-[#15191a]">
             Let&apos;s estimate your rank
           </h1>
-          <p className="text-[14.5px] leading-[1.55] text-[#6b7472]">
-            Rough answers are fine — we&apos;ll show you a range, not a false promise.
+          <p className="max-w-[56ch] text-[14.5px] leading-[1.55] text-[#6b7472]">
+            Rough answers are fine — we&apos;ll show you a range, not a false promise. You can re-run
+            this once your score is confirmed.
           </p>
         </div>
 

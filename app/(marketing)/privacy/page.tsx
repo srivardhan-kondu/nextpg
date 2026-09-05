@@ -1,11 +1,12 @@
-import type { Metadata } from 'next';
 import { LegalPage } from '../legal-layout';
 import { siteConfig } from '@/config/site';
+import { pageMetadata } from '@/lib/seo/metadata';
 
-export const metadata: Metadata = {
+export const metadata = pageMetadata({
   title: 'Privacy Policy',
   description: `How ${siteConfig.brand} collects, uses and protects your data.`,
-};
+  path: '/privacy',
+});
 
 export default function PrivacyPage() {
   return (

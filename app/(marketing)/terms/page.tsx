@@ -1,11 +1,12 @@
-import type { Metadata } from 'next';
 import { LegalPage } from '../legal-layout';
 import { siteConfig, pricing, PREDICTION_DISCLAIMER } from '@/config/site';
+import { pageMetadata } from '@/lib/seo/metadata';
 
-export const metadata: Metadata = {
+export const metadata = pageMetadata({
   title: 'Terms of Service',
   description: `Terms governing your use of ${siteConfig.brand}.`,
-};
+  path: '/terms',
+});
 
 export default function TermsPage() {
   return (

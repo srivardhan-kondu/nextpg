@@ -24,6 +24,10 @@ export function MarketingFooter() {
             <li><Link href="/dream-validator" className="hover:text-[#15191a]">Dream Validator</Link></li>
             <li><Link href="/sample-report" className="hover:text-[#15191a]">Sample Report</Link></li>
             <li><Link href="/credits" className="hover:text-[#15191a]">Pricing</Link></li>
+            {/* The cutoff hub is the entry point crawlers follow into every
+                generated college and branch page — it needs a site-wide link,
+                not only the one from the landing page. */}
+            <li><Link href="/neet-pg-cutoffs" className="hover:text-[#15191a]">NEET PG Cutoffs</Link></li>
           </ul>
         </div>
 

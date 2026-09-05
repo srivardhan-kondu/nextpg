@@ -1,4 +1,29 @@
 /**
+ * Absolute origin for canonical URLs, Open Graph tags, the sitemap and robots.
+ *
+ * Every one of those is worthless when it points at localhost, and a
+ * `NEXT_PUBLIC_APP_URL` left at its development value silently does exactly
+ * that in production. So an explicit value only wins when it is not localhost;
+ * otherwise we fall back to the domain Vercel injects at build time, and only
+ * then to localhost for a local `next dev`.
+ *
+ * `VERCEL_PROJECT_PRODUCTION_URL` is the project's stable production domain —
+ * not `VERCEL_URL`, which is unique per deployment and would make every preview
+ * build advertise itself as canonical.
+ */
+function resolveSiteUrl(): string {
+  const explicit = process.env.NEXT_PUBLIC_APP_URL?.trim();
+  const isLocal = (u: string) => /^https?:\/\/(localhost|127\.0\.0\.1|\[::1\])(:|\/|$)/i.test(u);
+
+  if (explicit && !isLocal(explicit)) return explicit.replace(/\/+$/, '');
+
+  const vercel = process.env.VERCEL_PROJECT_PRODUCTION_URL?.trim();
+  if (vercel) return `https://${vercel.replace(/^https?:\/\//, '').replace(/\/+$/, '')}`;
+
+  return explicit ?? 'http://localhost:3000';
+}
+
+/**
  * Single source of truth for brand + commercial constants.
  * `brand` drives every user-visible name (nav, logo, PDF cover, page titles,
  * metadata) — rename here and it propagates in one edit.
@@ -11,9 +36,11 @@ export const siteConfig = {
   tagline: 'Predict Your Rank. Validate Your Dream. Plan Your PG Journey.',
   description:
     'Get rank estimates, branch validation, college recommendations, AIQ insights, and state quota opportunities for NEET PG.',
-  url: process.env.NEXT_PUBLIC_APP_URL ?? 'http://localhost:3000',
+  url: resolveSiteUrl(),
   supportEmail: 'support@nextpg.in',
-  ogImage: '/og.png',
+  ogImage: '/opengraph-image',
+  /** Used by Organization/WebSite JSON-LD. Add real profiles as they go live. */
+  socialProfiles: [] as readonly string[],
 } as const;
 
 /**

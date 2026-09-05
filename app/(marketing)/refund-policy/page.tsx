@@ -1,11 +1,12 @@
-import type { Metadata } from 'next';
 import { LegalPage } from '../legal-layout';
 import { siteConfig, pricing } from '@/config/site';
+import { pageMetadata } from '@/lib/seo/metadata';
 
-export const metadata: Metadata = {
+export const metadata = pageMetadata({
   title: 'Refund Policy',
   description: `Cancellation and refund terms for ${siteConfig.brand} credits.`,
-};
+  path: '/refund-policy',
+});
 
 export default function RefundPolicyPage() {
   return (

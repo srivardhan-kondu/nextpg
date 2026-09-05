@@ -1,4 +1,3 @@
-import type { Metadata } from 'next';
 import Link from 'next/link';
 import { CreditCard, HelpCircle, Mail, ShieldQuestion } from 'lucide-react';
 
@@ -8,11 +7,13 @@ import { MarketingFooter } from '@/features/landing/components/marketing-footer'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { siteConfig, pricing, PREDICTION_DISCLAIMER } from '@/config/site';
+import { pageMetadata } from '@/lib/seo/metadata';
 
-export const metadata: Metadata = {
+export const metadata = pageMetadata({
   title: 'Help & Support',
   description: `Answers to common questions about ${siteConfig.brand} predictions, credits and reports.`,
-};
+  path: '/support',
+});
 
 const FAQS = [
   {

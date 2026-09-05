@@ -1,3 +1,4 @@
+import { cache } from 'react';
 import { randomUUID } from 'node:crypto';
 import { Prisma } from '@prisma/client';
 import { prisma } from '@/lib/prisma';
@@ -21,18 +22,18 @@ export class InsufficientCreditsError extends Error {
  */
 const TX_OPTIONS = { maxWait: 10_000, timeout: 20_000 } as const;
 
-export async function ensureCreditAccount(userId: string) {
+export const ensureCreditAccount = cache(async (userId: string) => {
   return prisma.predictionCredit.upsert({
     where: { userId },
     update: {},
     create: { userId, balance: 0, purchased: 0, used: 0 },
   });
-}
+});
 
-export async function getBalance(userId: string) {
+export const getBalance = cache(async (userId: string) => {
   const account = await prisma.predictionCredit.findUnique({ where: { userId } });
   return account ?? { balance: 0, purchased: 0, used: 0, userId, id: '', createdAt: new Date(), updatedAt: new Date() };
-}
+});
 
 /**
  * Spend one credit and mark a prediction unlocked, atomically.

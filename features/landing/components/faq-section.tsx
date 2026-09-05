@@ -1,4 +1,9 @@
-const faqs = [
+/**
+ * Single source for the FAQ. Exported because the landing page emits FAQPage
+ * JSON-LD from it: Google requires the marked-up answer to be the answer
+ * actually visible on the page, so these must never be maintained twice.
+ */
+export const faqs = [
   {
     q: 'How accurate is the rank prediction?',
     a: 'The estimate is built from published score-to-rank data and last year\'s closing ranks. We always show a range and a confidence score rather than a single number, because the actual rank depends on the full candidate cohort, which nobody can know in advance.',

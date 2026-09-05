@@ -12,7 +12,7 @@ import { createPredictionSchema, type CreatePredictionInput } from '@/validators
 import {
   CATEGORY_OPTIONS, GENDER_OPTIONS, INDIAN_STATES, PREFERRED_TYPE_OPTIONS, SUB_CATEGORY_OPTIONS,
 } from '@/lib/constants';
-import { EXAM } from '@/config/site';
+import { EXAM, LATEST_CUTOFF_YEAR } from '@/config/site';
 import { computeScore } from '@/services/prediction/scoring';
 import { cn } from '@/lib/utils';
 import {
@@ -242,17 +242,8 @@ export function PredictionForm({ defaults }: PredictionFormProps) {
       <div className="grid grid-cols-1 gap-[52px] lg:grid-cols-[1fr_372px]">
         {/* ── Main form column ── */}
         <div className="flex flex-col gap-[34px]">
-          {/* Section heading */}
-          <div className="flex flex-col gap-[7px]">
-            <h2 className="m-0 text-[27px] font-normal leading-[1.2] tracking-[-0.02em] text-[#15191a]">
-              Let&apos;s estimate your rank
-            </h2>
-            <p className="m-0 max-w-[56ch] text-[14.5px] leading-[1.55] text-[#6b7472]">
-              Rough answers are fine — we&apos;ll show you a range, not a false promise. You can re-run
-              this once your score is confirmed.
-            </p>
-          </div>
-
+          {/* No heading here: the page owns the <h1>. Repeating it rendered the
+              title and subtitle twice on /predictor. */}
           {/* ─ Your details ─ */}
           <div className="flex flex-col gap-4">
             <span className="text-[11.5px] font-medium leading-none tracking-[.1em] uppercase text-[#6b7472]">
@@ -484,9 +475,13 @@ export function PredictionForm({ defaults }: PredictionFormProps) {
             <span className="text-[13.5px] font-medium leading-[1.3] text-[#15191a]">
               A note on accuracy
             </span>
+            {/* Year is derived, not written in prose: this card previously claimed
+                "four years of closing ranks" while the database held one, and a
+                hardcoded number goes stale the moment new data lands. */}
             <p className="m-0 text-[12.5px] leading-[1.55] text-[#6b7472]">
-              We model from four years of closing ranks and quota rules. Counselling outcomes shift
-              year to year, so we always give you a band and tell you how confident we are.
+              Every college we show is backed by a published {LATEST_CUTOFF_YEAR} closing rank from
+              MCC and state counselling results — we never invent or estimate a cutoff. Outcomes
+              shift year to year, so we give you a band and tell you how confident we are.
             </p>
           </div>
         </div>
