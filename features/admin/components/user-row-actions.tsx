@@ -4,7 +4,7 @@ import * as React from 'react';
 import { useActionState } from 'react';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
-import { MoreHorizontal } from 'lucide-react';
+import { MoreHorizontal, ExternalLink } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -71,6 +71,10 @@ export function UserRowActions({ user, canChangeRole, isSelf }: UserRowActionsPr
           <DropdownMenuLabel>Manage user</DropdownMenuLabel>
           <DropdownMenuSeparator />
 
+          <DropdownMenuItem onSelect={() => router.push(`/admin/users/${user.id}`)}>
+            <ExternalLink className="mr-2 h-3.5 w-3.5" />
+            View profile &amp; predictions
+          </DropdownMenuItem>
           <DropdownMenuItem onSelect={() => setCreditsOpen(true)}>Adjust credits</DropdownMenuItem>
 
           {canChangeRole ? (

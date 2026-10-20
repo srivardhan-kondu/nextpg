@@ -23,7 +23,8 @@ export type NavIcon =
   | 'shield'
   | 'users'
   | 'wallet'
-  | 'upload';
+  | 'upload'
+  | 'activity';
 
 export interface NavItem {
   href: string;
@@ -49,6 +50,7 @@ export const adminNav: NavItem[] = [
   { href: '/admin/quota-rules', label: 'Quota Rules', icon: 'shield' },
   { href: '/admin/users', label: 'Users', icon: 'users' },
   { href: '/admin/payments', label: 'Payments', icon: 'wallet' },
+  { href: '/admin/predictions', label: 'Predictions Report', icon: 'activity' },
   { href: '/admin/reports', label: 'Reports', icon: 'file-text' },
   { href: '/admin/import', label: 'Bulk Import', icon: 'upload' },
 ];

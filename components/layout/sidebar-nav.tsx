@@ -3,8 +3,8 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import {
-  BarChart3, Building2, CreditCard, FileText, GitBranch, LayoutDashboard, ScrollText,
-  Shield, Sparkles, Target, Upload, User, Users, Wallet, type LucideIcon,
+  Activity, BarChart3, Building2, CreditCard, FileText, GitBranch, LayoutDashboard,
+  ScrollText, Shield, Sparkles, Target, Upload, User, Users, Wallet, type LucideIcon,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { NavIcon, NavItem } from './nav-items';
@@ -25,6 +25,7 @@ const ICONS: Record<NavIcon, LucideIcon> = {
   users: Users,
   wallet: Wallet,
   upload: Upload,
+  activity: Activity,
 };
 
 export function SidebarNav({ items, onNavigate }: { items: NavItem[]; onNavigate?: () => void }) {

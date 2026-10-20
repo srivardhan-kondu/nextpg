@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import Link from 'next/link';
 
 import { requireAdmin } from '@/lib/auth/guards';
 import { userRepository } from '@/repositories/user.repository';
@@ -64,7 +65,12 @@ export default async function AdminUsersPage({
               data.items.map((user) => (
                 <TableRow key={user.id}>
                   <TableCell>
-                    <span className="font-medium text-foreground">{user.name ?? '—'}</span>
+                    <Link
+                      href={`/admin/users/${user.id}`}
+                      className="font-medium text-foreground hover:text-primary hover:underline transition-colors"
+                    >
+                      {user.name ?? '—'}
+                    </Link>
                     <span className="mt-0.5 block text-xs text-muted-foreground">{user.email}</span>
                   </TableCell>
                   <TableCell>

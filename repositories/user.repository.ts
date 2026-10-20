@@ -9,6 +9,35 @@ export const userRepository = {
     });
   },
 
+  /** Admin detail view — user + credits + predictions + payments. */
+  async byIdWithDetails(id: string) {
+    return prisma.user.findUnique({
+      where: { id },
+      include: {
+        credit: true,
+        predictions: {
+          orderBy: { createdAt: 'desc' },
+          include: {
+            reports: { select: { id: true, status: true }, take: 1, orderBy: { createdAt: 'desc' } },
+          },
+        },
+        payments: {
+          orderBy: { createdAt: 'desc' },
+          select: {
+            id: true,
+            amount: true,
+            creditsSold: true,
+            status: true,
+            paidAt: true,
+            createdAt: true,
+            method: true,
+          },
+        },
+        _count: { select: { predictions: true, payments: true, dreamValidations: true } },
+      },
+    });
+  },
+
   async byEmail(email: string) {
     return prisma.user.findUnique({ where: { email: email.toLowerCase() } });
   },

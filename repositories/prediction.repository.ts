@@ -46,6 +46,59 @@ export const predictionRepository = {
   async countForUser(userId: string) {
     return prisma.prediction.count({ where: { userId } });
   },
+
+  /** Admin-only: paginated view of all predictions with user info attached. */
+  async adminList(params: {
+    page?: number;
+    perPage?: number;
+    search?: string;
+    status?: string;
+    state?: string;
+  } = {}) {
+    const { page = 1, perPage = 25, search, status, state } = params;
+
+    const where: import('@prisma/client').Prisma.PredictionWhereInput = {
+      ...(status ? { status: status as import('@prisma/client').PredictionStatus } : {}),
+      ...(state ? { state } : {}),
+      ...(search
+        ? {
+            OR: [
+              { user: { email: { contains: search, mode: 'insensitive' } } },
+              { user: { name: { contains: search, mode: 'insensitive' } } },
+              { candidateName: { contains: search, mode: 'insensitive' } },
+            ],
+          }
+        : {}),
+    };
+
+    const [items, total] = await Promise.all([
+      prisma.prediction.findMany({
+        where,
+        orderBy: { createdAt: 'desc' },
+        skip: (page - 1) * perPage,
+        take: perPage,
+        include: {
+          user: { select: { id: true, email: true, name: true } },
+          reports: { select: { id: true, status: true }, orderBy: { createdAt: 'desc' }, take: 1 },
+        },
+      }),
+      prisma.prediction.count({ where }),
+    ]);
+
+    return { items, total, page, perPage, pages: Math.max(1, Math.ceil(total / perPage)) };
+  },
+
+  /** Admin-only: full prediction detail with college list from the resultPayload. */
+  async adminById(id: string) {
+    return prisma.prediction.findUnique({
+      where: { id },
+      include: {
+        user: { select: { id: true, email: true, name: true, phone: true } },
+        reports: { orderBy: { createdAt: 'desc' } },
+        dreamValidations: { orderBy: { createdAt: 'desc' } },
+      },
+    });
+  },
 };
 
 /** Narrow the Json column back to the engine result type at the read boundary. */
