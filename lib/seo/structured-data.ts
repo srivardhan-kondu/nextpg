@@ -1,4 +1,4 @@
-import { siteConfig, pricing, EXAM_YEAR } from '@/config/site';
+import { siteConfig, pricing, EXAM_YEAR, LATEST_CUTOFF_YEAR } from '@/config/site';
 
 /**
  * JSON-LD builders.
@@ -126,6 +126,80 @@ export function breadcrumbSchema(trail: readonly { name: string; path: string }[
       name: crumb.name,
       item: absolute(crumb.path),
     })),
+  };
+}
+
+/**
+ * HowTo schema — earns a prominent step-by-step rich result for
+ * "how to use NEET PG predictor" / "how to check counselling colleges" queries.
+ */
+export function howToSchema(): Json {
+  return {
+    '@type': 'HowTo',
+    name: `How to use the NEET PG ${EXAM_YEAR} rank and college predictor`,
+    description:
+      `A step-by-step guide to estimating your NEET PG ${EXAM_YEAR} All India Rank and ` +
+      'finding realistic MD/MS college options in under two minutes.',
+    totalTime: 'PT2M',
+    tool: [{ '@type': 'HowToTool', name: 'NextPG Predictor (free web tool)' }],
+    step: [
+      {
+        '@type': 'HowToStep',
+        name: 'Enter your expected score',
+        text: `Type in the score you expect on your NEET PG ${EXAM_YEAR} answer sheet — correct answers, wrong answers, and unattempted questions.`,
+        url: absolute('/#step-score'),
+      },
+      {
+        '@type': 'HowToStep',
+        name: 'Select your state, category and quota',
+        text: 'Choose your domicile state, reservation category (General, OBC, SC, ST, EWS), and sub-category if applicable (PWD, Armed Forces).',
+        url: absolute('/#step-profile'),
+      },
+      {
+        '@type': 'HowToStep',
+        name: 'Get your estimated rank range',
+        text: `The tool calculates your estimated NEET PG ${EXAM_YEAR} All India Rank as a range — always a range, never a single number — with a confidence score based on historical data coverage.`,
+        url: absolute('/#step-rank'),
+      },
+      {
+        '@type': 'HowToStep',
+        name: 'See your college and branch opportunities',
+        text: 'Your rank is matched against published closing ranks to produce a shortlist of realistic MD/MS colleges and branches, split by AIQ and state quota, and banded as Strong, Moderate or Stretch.',
+        url: absolute('/#step-colleges'),
+      },
+      {
+        '@type': 'HowToStep',
+        name: 'Unlock the full counselling report',
+        text: 'Spend one credit to unlock the full PDF report with all college recommendations, dream branch validation, counselling strategy notes and category-wise seat analysis.',
+        url: absolute('/credits'),
+      },
+    ],
+  };
+}
+
+/**
+ * Article schema for editorial/guide pages.
+ * Positions the page as an authoritative piece — eligible for the
+ * top-stories carousel and "People also ask" visibility.
+ */
+export function articleSchema(input: {
+  headline: string;
+  description: string;
+  path: string;
+  datePublished?: string;
+  dateModified?: string;
+}): Json {
+  return {
+    '@type': 'Article',
+    headline: input.headline,
+    description: input.description,
+    url: absolute(input.path),
+    inLanguage: 'en-IN',
+    publisher: { '@id': ORG_ID },
+    author: { '@id': ORG_ID },
+    datePublished: input.datePublished ?? new Date().toISOString().split('T')[0],
+    dateModified: input.dateModified ?? new Date().toISOString().split('T')[0],
+    mainEntityOfPage: { '@type': 'WebPage', '@id': absolute(input.path) },
   };
 }
 

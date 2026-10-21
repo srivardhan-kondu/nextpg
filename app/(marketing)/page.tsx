@@ -2,7 +2,7 @@ import { auth } from '@/auth';
 import { siteConfig, EXAM_YEAR } from '@/config/site';
 import { pageMetadata } from '@/lib/seo/metadata';
 import { JsonLd } from '@/components/seo/json-ld';
-import { graph, faqSchema, webApplicationSchema } from '@/lib/seo/structured-data';
+import { graph, faqSchema, webApplicationSchema, howToSchema } from '@/lib/seo/structured-data';
 import { MarketingHeader } from '@/features/landing/components/marketing-header';
 import { Hero } from '@/features/landing/components/hero';
 import { FeatureCards } from '@/features/landing/components/feature-cards';
@@ -19,20 +19,27 @@ import { MarketingFooter } from '@/features/landing/components/marketing-footer'
  * signal we fully control. The brand still lands via the layout's template.
  */
 export const metadata = pageMetadata({
-  title: `NEET PG Rank Predictor ${EXAM_YEAR} — Predict Your Rank & Colleges`,
+  title: `NEET PG Rank Predictor ${EXAM_YEAR} — College Predictor & Counselling Guide`,
   description:
-    `Free NEET PG ${EXAM_YEAR} rank predictor. Enter your expected score to get an estimated ` +
-    'All India Rank, then see the MD/MS colleges and branches realistically open to you across ' +
-    'AIQ, state and deemed quotas — matched against published closing ranks.',
+    `Free NEET PG ${EXAM_YEAR} rank predictor & college predictor. Enter your expected score to get ` +
+    'an estimated All India Rank, then see exactly which MD/MS colleges are realistic for your ' +
+    'rank, category and quota — across AIQ and state counselling.',
   path: '/',
   keywords: [
     `NEET PG rank predictor ${EXAM_YEAR}`,
-    'NEET PG college predictor',
+    `NEET PG college predictor ${EXAM_YEAR}`,
+    'NEET PG counselling 2026',
+    'MCC PG counselling',
     'NEET PG marks vs rank',
-    'NEET PG cutoff',
-    'AIQ counselling',
+    'NEET PG cutoff 2024',
+    'AIQ counselling seats',
     'state quota PG seats',
     'MD MS college predictor',
+    'NEET PG expected rank calculator',
+    'PG medical counselling India',
+    'NEET PG stray vacancy round',
+    'NEET PG category wise cutoff',
+    'best college for NEET PG rank',
   ],
 });
 
@@ -41,7 +48,7 @@ export default async function LandingPage() {
 
   return (
     <>
-      <JsonLd data={graph(webApplicationSchema(), faqSchema(faqs))} />
+      <JsonLd data={graph(webApplicationSchema(), faqSchema(faqs), howToSchema())} />
       <MarketingHeader isLoggedIn={Boolean(session?.user)} />
       <main id="main">
         <Hero />
