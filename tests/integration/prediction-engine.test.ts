@@ -10,6 +10,7 @@ vi.mock('@/repositories/cutoff.repository', () => ({
     coverage: vi.fn(),
     findForCollege: vi.fn(),
     findForBranch: vi.fn(),
+    hasStateQuotaData: vi.fn(),
   },
 }));
 
@@ -94,10 +95,28 @@ const input: PredictionInput = {
   examYear: 2025,
 };
 
+// A stand-in for the cutoff table: the mock honours the window, quota filter,
+// order and limit of each query, the way the real repository does.
+let table: CutoffWithRefs[] = [];
+function serve(rows: CutoffWithRefs[]) {
+  table = rows;
+}
+
 describe('RuleBasedPredictionProvider', () => {
   beforeEach(() => {
+    table = [];
     vi.mocked(cutoffRepository.coverage).mockResolvedValue(1);
-    vi.mocked(cutoffRepository.findOpportunities).mockResolvedValue([]);
+    vi.mocked(cutoffRepository.hasStateQuotaData).mockResolvedValue(true);
+    vi.mocked(cutoffRepository.findOpportunities).mockImplementation(async (q) => {
+      const rows = table.filter(
+        (r) =>
+          q.quotas.includes(r.quota) &&
+          (q.minClosingRank === undefined || r.closingRank >= q.minClosingRank) &&
+          (q.maxClosingRank === undefined || r.closingRank <= q.maxClosingRank),
+      );
+      rows.sort((a, b) => (q.order === 'desc' ? b.closingRank - a.closingRank : a.closingRank - b.closingRank));
+      return rows.slice(0, q.take ?? 400);
+    });
   });
 
   it('always returns a range, never a single rank', async () => {
@@ -129,25 +148,45 @@ describe('RuleBasedPredictionProvider', () => {
     const probe = await provider.predict(input);
     const { rankMin, rankMax } = probe;
 
-    vi.mocked(cutoffRepository.findOpportunities).mockResolvedValue([
+    serve([
       cutoff({ closingRank: Math.round(rankMax * 2) }),      // comfortably after → strong
       cutoff({ closingRank: Math.round(rankMin * 1.02) }),   // inside the window → moderate
-      cutoff({ closingRank: Math.round(rankMin * 0.4) }),    // closed well before → stretch
+      cutoff({ closingRank: Math.round(rankMin * 0.7) }),    // closed before → stretch
+      cutoff({ closingRank: Math.round(rankMin * 0.2) }),    // closed far before → out of reach, not listed
     ]);
 
     const result = await provider.predict(input);
     expect(result.bands.STRONG).toHaveLength(1);
     expect(result.bands.MODERATE).toHaveLength(1);
     expect(result.bands.STRETCH).toHaveLength(1);
+    expect(result.totalOpportunities).toBe(3);
+  });
+
+  it('still finds safe seats when hundreds of harder seats exist', async () => {
+    const provider = new RuleBasedPredictionProvider();
+    const { rankMin, rankMax } = await provider.predict(input);
+
+    // 900 seats just out of reach would once fill the whole result.
+    const hard = Array.from({ length: 900 }, (_, i) =>
+      cutoff({ closingRank: Math.round(rankMin * 0.5) + i, quota: 'AIQ' }),
+    );
+    const safe = [cutoff({ closingRank: Math.round(rankMax * 1.5) }), cutoff({ closingRank: Math.round(rankMax * 1.8) })];
+    serve([...hard, ...safe]);
+
+    const result = await provider.predict(input);
+    expect(result.bands.STRONG).toHaveLength(2);
+    // Stretch seats are the ones nearest to reach, not the hardest.
+    expect(result.bands.STRETCH.length).toBeGreaterThan(0);
+    expect(Math.min(...result.bands.STRETCH.map((s) => s.closingRank))).toBeGreaterThan(Math.round(rankMin * 0.5) + 700);
   });
 
   it('keeps probability strictly between 0 and 100 — no certainty either way', async () => {
     const provider = new RuleBasedPredictionProvider();
     const probe = await provider.predict(input);
 
-    vi.mocked(cutoffRepository.findOpportunities).mockResolvedValue([
+    serve([
       cutoff({ closingRank: probe.rankMax * 50 }),
-      cutoff({ closingRank: 1 }),
+      cutoff({ closingRank: Math.round(probe.rankMin * 0.55) }),
     ]);
 
     const result = await provider.predict(input);
@@ -158,20 +197,31 @@ describe('RuleBasedPredictionProvider', () => {
     }
   });
 
-  it('separates AIQ from state quota counts', async () => {
+  it('counts MCC seats (AIQ, deemed) apart from state quota seats', async () => {
     const provider = new RuleBasedPredictionProvider();
     const probe = await provider.predict(input);
 
-    vi.mocked(cutoffRepository.findOpportunities).mockResolvedValue([
+    serve([
       cutoff({ closingRank: probe.rankMax * 2, quota: 'AIQ' }),
       cutoff({ closingRank: probe.rankMax * 2.1, quota: 'STATE' }),
       cutoff({ closingRank: probe.rankMax * 2.2, quota: 'DEEMED' }),
     ]);
 
     const result = await provider.predict(input);
-    expect(result.aiqOpportunities).toBe(1);
-    expect(result.stateOpportunities).toBe(2);
+    expect(result.aiqOpportunities).toBe(2);
+    expect(result.stateOpportunities).toBe(1);
     expect(result.totalOpportunities).toBe(3);
+  });
+
+  it('says so when state quota cutoffs are not loaded for the candidate\'s state', async () => {
+    vi.mocked(cutoffRepository.hasStateQuotaData).mockResolvedValue(false);
+    const result = await new RuleBasedPredictionProvider().predict(input);
+    expect(result.notes.some((n) => n.includes('State quota closing ranks for Telangana are not loaded'))).toBe(true);
+  });
+
+  it('shows the official rank range for the entered score', async () => {
+    const result = await new RuleBasedPredictionProvider().predict({ ...input, expectedScore: 500 });
+    expect(result.notes.some((n) => n.includes('ranked 11,828–12,111'))).toBe(true);
   });
 
   it('lowers confidence when cutoff coverage is thin, and says so', async () => {

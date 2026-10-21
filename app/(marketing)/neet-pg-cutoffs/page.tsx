@@ -5,8 +5,17 @@ import { LATEST_CUTOFF_YEAR, EXAM_YEAR } from '@/config/site';
 import { pageMetadata } from '@/lib/seo/metadata';
 import { JsonLd } from '@/components/seo/json-ld';
 import { graph, breadcrumbSchema } from '@/lib/seo/structured-data';
-import { COLLEGE_TYPE_LABEL } from '@/lib/constants';
 import { seoRepository } from '@/repositories/seo.repository';
+import { branchLabel, slugify } from '@/lib/utils';
+
+/** Colleges grouped by state, states alphabetical, colleges by name within each. */
+function byState<T extends { state: string; name: string }>(colleges: T[]): [string, T[]][] {
+  const groups = new Map<string, T[]>();
+  for (const c of colleges) groups.set(c.state, [...(groups.get(c.state) ?? []), c]);
+  return [...groups.entries()]
+    .sort(([a], [b]) => a.localeCompare(b))
+    .map(([state, list]) => [state, list.sort((a, b) => a.name.localeCompare(b.name))]);
+}
 
 /** One query pair per render, shared by generateMetadata and the page. */
 const loadHub = cache(async () => {
@@ -111,7 +120,7 @@ export default async function CutoffHubPage() {
                       className="flex items-center justify-between rounded-[10px] border border-black/[0.08] bg-white px-4 py-3 text-[14px] transition-colors hover:bg-[#faf9f6]"
                     >
                       <span className="font-medium text-[#15191a]">
-                        {b.degree} {b.name}
+                        {branchLabel(b)}
                       </span>
                       <span className="text-[12.5px] tabular-nums text-[#6b7472]">
                         {b.rowCount} cutoffs
@@ -128,17 +137,22 @@ export default async function CutoffHubPage() {
               <h2 className="text-[24px] font-normal tracking-[-0.02em] text-[#15191a]">
                 Cutoffs by college
               </h2>
-              <ul className="mt-5 grid gap-2.5 sm:grid-cols-2">
-                {colleges.map((c) => (
-                  <li key={c.slug}>
+              <p className="mt-2 text-[14px] text-[#6b7472]">
+                {colleges.length.toLocaleString('en-IN')} colleges. Pick a state to see its colleges.
+              </p>
+              {/* One link per state rather than per college: a thousand college
+                  links on one page weighed over a megabyte. Each state page
+                  links on to its colleges, so crawlers still reach every one. */}
+              <ul className="mt-5 grid gap-2.5 sm:grid-cols-2 lg:grid-cols-3">
+                {byState(colleges).map(([state, list]) => (
+                  <li key={state}>
                     <Link
-                      href={`/neet-pg-cutoffs/college/${c.slug}`}
-                      className="flex flex-col gap-1 rounded-[10px] border border-black/[0.08] bg-white px-4 py-3 transition-colors hover:bg-[#faf9f6]"
+                      href={`/neet-pg-cutoffs/state/${slugify(state)}`}
+                      className="flex items-center justify-between rounded-[10px] border border-black/[0.08] bg-white px-4 py-3 text-[14px] transition-colors hover:bg-[#faf9f6]"
                     >
-                      <span className="text-[14px] font-medium text-[#15191a]">{c.name}</span>
-                      <span className="text-[12.5px] text-[#6b7472]">
-                        {[c.city, c.state].filter(Boolean).join(', ')} ·{' '}
-                        {COLLEGE_TYPE_LABEL[c.type]} · {c.rowCount} cutoffs
+                      <span className="font-medium text-[#15191a]">{state}</span>
+                      <span className="text-[12.5px] tabular-nums text-[#6b7472]">
+                        {list.length} {list.length === 1 ? 'college' : 'colleges'}
                       </span>
                     </Link>
                   </li>

@@ -25,6 +25,14 @@ on day one — they are realistically *shaped* but they are generated, not
 published. Shipping them to real users as predictions is the worst failure this
 product can have.
 
+## Loaded so far
+
+- `mcc-2025-r1/` — MCC 2025 Round 1 final allotment result: 1,695 colleges,
+  96 courses, 38,368 closing ranks (AIQ, deemed, NRI, central-university
+  institutional quota and DNB). Built with `scripts/mcc/` (see its README) and
+  loaded with `scripts/import-mcc-dataset.ts`.
+- Not yet: state quota results, MCC Rounds 2–3, PwD and minority-quota seats.
+
 ## Where the real data comes from
 
 | Quota | Source | Notes |

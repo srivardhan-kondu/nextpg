@@ -1,5 +1,6 @@
 import { EXAM_FACTS, SCHEDULE, formatDay, formatLong } from '@/lib/content/counselling';
 import { RANKED_CANDIDATES, SCORE_RANK_YEAR, officialRankRange } from '@/services/prediction/scoring';
+import { CUTOFF_SOURCE_LABEL } from '@/config/site';
 
 /** "500 marks was rank 11,828–12,111" — read from the official table, never typed. */
 function marksVsRank(score: number): string {
@@ -32,7 +33,7 @@ export const faqs = [
   },
   {
     q: 'Where does your cutoff data come from?',
-    a: 'Closing ranks come from published MCC and state counseling results. Every college shown in your report is backed by a stored cutoff record — we never invent data. Where we lack data for your category, we say so instead of guessing.',
+    a: `Closing ranks come from MCC's official ${CUTOFF_SOURCE_LABEL} allotment result, which lists every seat MCC allotted and the rank it went to — across All India Quota, deemed, central university and DNB seats. The closing rank is the last rank that got each seat. State quota results are being added state by state; until a state's are loaded, your report says so instead of guessing.`,
   },
   {
     q: 'Can I use this for both AIQ and state quota counseling?',

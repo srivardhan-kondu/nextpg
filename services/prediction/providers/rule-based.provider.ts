@@ -19,7 +19,7 @@ import type {
   PredictionResult,
   StrategyNote,
 } from '@/types/prediction';
-import { LATEST_CUTOFF_YEAR, PREDICTION_DISCLAIMER } from '@/config/site';
+import { CUTOFF_SOURCE_LABEL, LATEST_CUTOFF_YEAR, PREDICTION_DISCLAIMER } from '@/config/site';
 import { clamp, formatRank } from '@/lib/utils';
 
 /**
@@ -39,6 +39,21 @@ function assignBand(closingRank: number, rankMin: number, rankMax: number): Band
   if (closingRank >= rankMin * 0.92) return 'MODERATE';
   return 'STRETCH';
 }
+
+/**
+ * Closing-rank windows for each band, mirroring assignBand. Stretch stops at
+ * half the best-case rank: a seat that closed at a quarter of your rank is not
+ * a stretch, it is out of reach, and listing it buries the useful ones.
+ */
+function bandWindows(rankMin: number, rankMax: number) {
+  const strongFrom = Math.ceil(rankMax * 1.12);
+  const moderateFrom = Math.ceil(rankMin * 0.92);
+  const stretchFrom = Math.floor(rankMin * 0.5);
+  return { strongFrom, moderateFrom, stretchFrom };
+}
+
+/** Per-band row limits: enough to rank and report on, small enough to store. */
+const BAND_TAKE = { STRONG: 250, MODERATE: 250, STRETCH: 120 } as const;
 
 /**
  * Probability that a rank window clears a given closing rank.
@@ -197,20 +212,32 @@ export class RuleBasedPredictionProvider implements PredictionProvider {
       academicYear: LATEST_CUTOFF_YEAR,
     });
 
-    const coverage = await cutoffRepository.coverage(input.category, LATEST_CUTOFF_YEAR);
+    const [coverage, hasStateData] = await Promise.all([
+      cutoffRepository.coverage(input.category, LATEST_CUTOFF_YEAR),
+      cutoffRepository.hasStateQuotaData(input.state, LATEST_CUTOFF_YEAR),
+    ]);
 
-    // Pull anything that closed up to ~2.2× the worst-case rank so stretch
-    // options above the window are still visible.
-    const rows = await cutoffRepository.findOpportunities({
+    // One query per band window. Strong and moderate seats come most desirable
+    // first (lowest closing rank); stretch seats come nearest-to-reach first.
+    const base = {
       category: input.category,
       subCategory: input.subCategory,
       state: input.state,
       quotas: eligibility.quotas,
       preferredType: input.preferredType,
-      maxClosingRank: Math.round(rankMax * 2.2),
       academicYear: LATEST_CUTOFF_YEAR,
-      take: 600,
-    });
+    };
+    const { strongFrom, moderateFrom, stretchFrom } = bandWindows(rankMin, rankMax);
+    const [strongRows, moderateRows, stretchRows] = await Promise.all([
+      cutoffRepository.findOpportunities({ ...base, minClosingRank: strongFrom, order: 'asc', take: BAND_TAKE.STRONG }),
+      cutoffRepository.findOpportunities({
+        ...base, minClosingRank: moderateFrom, maxClosingRank: strongFrom - 1, order: 'asc', take: BAND_TAKE.MODERATE,
+      }),
+      cutoffRepository.findOpportunities({
+        ...base, minClosingRank: stretchFrom, maxClosingRank: moderateFrom - 1, order: 'desc', take: BAND_TAKE.STRETCH,
+      }),
+    ]);
+    const rows = [...strongRows, ...moderateRows, ...stretchRows];
 
     const opportunities = rows.map((r) => toOpportunity(r, rankMin, rankMax));
 
@@ -226,8 +253,10 @@ export class RuleBasedPredictionProvider implements PredictionProvider {
       bands[key].sort((a, b) => a.closingRank - b.closingRank);
     }
 
-    const aiqOpportunities = opportunities.filter((o) => o.quota === 'AIQ').length;
-    const stateOpportunities = opportunities.filter((o) => o.quota !== 'AIQ').length;
+    // MCC counsels AIQ, deemed, institutional and NRI seats together; only
+    // STATE rows belong to the state's own counselling.
+    const aiqOpportunities = opportunities.filter((o) => o.quota !== 'STATE').length;
+    const stateOpportunities = opportunities.filter((o) => o.quota === 'STATE').length;
 
     const confidence = computeConfidence({
       score: expectedScore,
@@ -251,8 +280,13 @@ export class RuleBasedPredictionProvider implements PredictionProvider {
               : `In the official NEET PG ${SCORE_RANK_YEAR} result, candidates who scored ${expectedScore} were ranked ${formatRank(official.best)}–${formatRank(official.worst)}.`,
           ]
         : []),
-      `Based on ${LATEST_CUTOFF_YEAR} closing ranks for ${input.category} category.`,
+      `Based on ${CUTOFF_SOURCE_LABEL} closing ranks for ${input.category} category.`,
       ...eligibility.notes,
+      ...(hasStateData
+        ? []
+        : [
+            `State quota closing ranks for ${input.state} are not loaded yet, so this covers MCC counselling only (All India Quota, deemed and DNB seats).`,
+          ]),
     ];
     if (coverage < 0.5) {
       notes.push(

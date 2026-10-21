@@ -8,8 +8,11 @@ export interface CutoffQuery {
   state: string;
   quotas: QuotaType[];
   preferredType: PreferredCollegeType;
-  /** Only rows whose closingRank falls at or below this bound are relevant. */
-  maxClosingRank: number;
+  /** Only rows whose closingRank falls within [minClosingRank, maxClosingRank]. */
+  minClosingRank?: number;
+  maxClosingRank?: number;
+  /** 'asc' = most competitive first; 'desc' = closest to the lower bound's opposite end first. */
+  order?: 'asc' | 'desc';
   academicYear?: number;
   take?: number;
 }
@@ -25,8 +28,11 @@ function collegeTypeFilter(preferred: PreferredCollegeType): Prisma.CollegeWhere
 
 export const cutoffRepository = {
   /**
-   * Candidate opportunities: every cutoff row the student could plausibly reach.
-   * Quota eligibility is decided upstream (quota service) and passed in.
+   * Candidate opportunities within one closing-rank window.
+   * Quota eligibility is decided upstream (quota service) and passed in. The
+   * engine asks for each band's window separately: with tens of thousands of
+   * real rows, one "lowest closing ranks first" query fills its limit with
+   * seats far beyond the candidate's reach and never reaches the safe ones.
    */
   async findOpportunities(query: CutoffQuery): Promise<CutoffWithRefs[]> {
     const {
@@ -34,7 +40,9 @@ export const cutoffRepository = {
       state,
       quotas,
       preferredType,
+      minClosingRank,
       maxClosingRank,
+      order = 'asc',
       academicYear = LATEST_CUTOFF_YEAR,
       take = 400,
     } = query;
@@ -44,16 +52,28 @@ export const cutoffRepository = {
         academicYear,
         category,
         quota: { in: quotas },
-        closingRank: { lte: maxClosingRank },
+        closingRank: {
+          ...(minClosingRank !== undefined ? { gte: minClosingRank } : {}),
+          ...(maxClosingRank !== undefined ? { lte: maxClosingRank } : {}),
+        },
         college: { isActive: true, ...collegeTypeFilter(preferredType) },
         branch: { isActive: true },
         // State quota rows are only usable in the candidate's own domicile state.
         OR: [{ quota: { not: 'STATE' } }, { quota: 'STATE', state }],
       },
       include: { college: true, branch: true },
-      orderBy: [{ closingRank: 'asc' }],
+      orderBy: [{ closingRank: order }],
       take,
     });
+  },
+
+  /** Whether any state quota closing ranks are loaded for this state and year. */
+  async hasStateQuotaData(state: string, academicYear = LATEST_CUTOFF_YEAR): Promise<boolean> {
+    const row = await prisma.historicalCutoff.findFirst({
+      where: { quota: 'STATE', state, academicYear },
+      select: { id: true },
+    });
+    return row !== null;
   },
 
   async findForCollege(collegeId: string, category: Category, academicYear = LATEST_CUTOFF_YEAR) {

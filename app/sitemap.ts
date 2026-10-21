@@ -40,10 +40,11 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   // 500 here as a reason to stop trusting the file. Fall back to static-only.
   let colleges: string[] = [];
   let branches: string[] = [];
+  let states: string[] = [];
   let lastVerified: Date | null = null;
 
   try {
-    [{ colleges, branches }, lastVerified] = await Promise.all([
+    [{ colleges, branches, states }, lastVerified] = await Promise.all([
       seoRepository.publishedSlugs(),
       seoRepository.lastVerifiedAt(),
     ]);
@@ -66,6 +67,12 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
           },
         ]
       : []),
+    ...states.map((slug) => ({
+      url: url(`/neet-pg-cutoffs/state/${slug}`),
+      lastModified: modified,
+      changeFrequency: 'monthly' as const,
+      priority: 0.85,
+    })),
     ...branches.map((slug) => ({
       url: url(`/neet-pg-cutoffs/branch/${slug}`),
       lastModified: modified,

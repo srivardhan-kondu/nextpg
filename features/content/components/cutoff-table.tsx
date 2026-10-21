@@ -70,7 +70,10 @@ export function CutoffTable({ rows, caption }: { rows: CutoffRow[]; caption: str
                     >
                       {r.branch.name}
                     </Link>
-                    <span className="block text-[12px] text-[#6b7472]">{r.branch.degree}</span>
+                    {/* Imported names already start with their degree ("MD …"). */}
+                    {r.branch.name.toLowerCase().startsWith(r.branch.degree.toLowerCase()) ? null : (
+                      <span className="block text-[12px] text-[#6b7472]">{r.branch.degree}</span>
+                    )}
                   </>
                 ) : null}
               </td>

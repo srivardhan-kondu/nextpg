@@ -8,19 +8,27 @@ import { JsonLd } from '@/components/seo/json-ld';
 import { graph, breadcrumbSchema, cutoffDatasetSchema } from '@/lib/seo/structured-data';
 import { COLLEGE_TYPE_LABEL } from '@/lib/constants';
 import { seoRepository } from '@/repositories/seo.repository';
+import { slugify } from '@/lib/utils';
 import { CutoffTable, SourceNote } from '@/features/content/components/cutoff-table';
 
 export const revalidate = 86400;
 
 /**
- * Only verified colleges are pre-rendered. `dynamicParams` stays on so a newly
- * verified college is served on first request rather than 404ing until the next
- * deploy — the page itself still refuses to render without enough data.
+ * Only verified colleges are pre-rendered, and only the largest few hundred:
+ * with 1,000+ published colleges, building every page on each deploy would
+ * slow every deploy for pages most visitors never open. `dynamicParams` stays
+ * on, so the rest render on first request and are then cached for a day — the
+ * page itself still refuses to render without enough data.
  */
+const PRERENDER_COLLEGES = 200;
+
 export async function generateStaticParams() {
   try {
-    const { colleges } = await seoRepository.publishedSlugs();
-    return colleges.map((slug) => ({ slug }));
+    const colleges = await seoRepository.publishedColleges();
+    return [...colleges]
+      .sort((a, b) => b.rowCount - a.rowCount)
+      .slice(0, PRERENDER_COLLEGES)
+      .map((c) => ({ slug: c.slug }));
   } catch {
     // Prerendering is an optimisation, not a correctness requirement: without a
     // database at build time we fall back to rendering these on first request.
@@ -87,6 +95,7 @@ export default async function CollegeCutoffPage({
           breadcrumbSchema([
             { name: 'Home', path: '/' },
             { name: `NEET PG cutoffs ${academicYear}`, path: '/neet-pg-cutoffs' },
+            { name: college.state, path: `/neet-pg-cutoffs/state/${slugify(college.state)}` },
             { name, path: `/neet-pg-cutoffs/college/${slug}` },
           ]),
           cutoffDatasetSchema({
@@ -120,6 +129,10 @@ export default async function CollegeCutoffPage({
         <Link href="/" className="hover:text-[#15191a]">Home</Link>
         <span aria-hidden> / </span>
         <Link href="/neet-pg-cutoffs" className="hover:text-[#15191a]">NEET PG cutoffs</Link>
+        <span aria-hidden> / </span>
+        <Link href={`/neet-pg-cutoffs/state/${slugify(college.state)}`} className="hover:text-[#15191a]">
+          {college.state}
+        </Link>
         <span aria-hidden> / </span>
         <span className="text-[#15191a]">{name}</span>
       </nav>

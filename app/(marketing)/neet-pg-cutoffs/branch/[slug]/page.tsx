@@ -7,6 +7,7 @@ import { pageMetadata } from '@/lib/seo/metadata';
 import { JsonLd } from '@/components/seo/json-ld';
 import { graph, breadcrumbSchema, cutoffDatasetSchema } from '@/lib/seo/structured-data';
 import { seoRepository } from '@/repositories/seo.repository';
+import { branchLabel } from '@/lib/utils';
 import { CutoffTable, SourceNote } from '@/features/content/components/cutoff-table';
 
 export const revalidate = 86400;
@@ -37,7 +38,7 @@ export async function generateMetadata({
   if (!data) return { title: 'Cutoffs not found', robots: { index: false, follow: false } };
 
   const { branch, cutoffs } = data;
-  const label = `${branch.degree} ${branch.name}`;
+  const label = branchLabel(branch);
   const best = Math.min(...cutoffs.map((c) => c.closingRank));
   const collegeCount = new Set(cutoffs.map((c) => c.college.slug)).size;
 
@@ -67,7 +68,7 @@ export default async function BranchCutoffPage({
   if (!data) notFound();
 
   const { branch, cutoffs, academicYear } = data;
-  const label = `${branch.degree} ${branch.name}`;
+  const label = branchLabel(branch);
   const sources = [...new Set(cutoffs.map((c) => c.source).filter((s): s is string => Boolean(s)))];
   const lastVerified = cutoffs.reduce<Date | null>(
     (latest, c) => (c.verifiedAt && (!latest || c.verifiedAt > latest) ? c.verifiedAt : latest),
@@ -91,8 +92,8 @@ export default async function BranchCutoffPage({
           cutoffDatasetSchema({
             name: `${label} — NEET PG ${academicYear} closing ranks by college`,
             description:
-              `Verified NEET PG ${academicYear} closing ranks for ${label} across ` +
-              `${collegeCount} colleges, by quota and category.`,
+              `Verified NEET PG ${academicYear} Open-category closing ranks for ${label} across ` +
+              `${collegeCount} colleges, by quota.`,
             path: `/neet-pg-cutoffs/branch/${slug}`,
             academicYear,
             sources,
@@ -115,11 +116,11 @@ export default async function BranchCutoffPage({
 
       <p className="mt-5 max-w-[62ch] text-[16px] leading-relaxed text-[#4e5654]">
         Across {collegeCount} {collegeCount === 1 ? 'college' : 'colleges'} in{' '}
-        {states.length === 1 ? states[0] : `${states.length} states`}, {label} seats closed between
-        rank {best.toLocaleString('en-IN')} and {worst.toLocaleString('en-IN')} in {academicYear}.
-        The spread is what matters: the same branch is a different proposition at a top government
-        institute than at a deemed university, and the table below separates them by quota and
-        category.
+        {states.length === 1 ? states[0] : `${states.length} states`}, Open-category {label} seats
+        closed between rank {best.toLocaleString('en-IN')} and {worst.toLocaleString('en-IN')} in{' '}
+        {academicYear}. The spread is what matters: the same course is a different proposition at a
+        top government institute than at a deemed university, and the table below separates them
+        by quota. Category-wise closing ranks (OBC, SC, ST, EWS) are on each college&apos;s page.
       </p>
 
       {branch.description && (
@@ -131,7 +132,7 @@ export default async function BranchCutoffPage({
       <div className="mt-8">
         <CutoffTable
           rows={cutoffs}
-          caption={`NEET PG ${academicYear} closing ranks for ${label} by college, quota and category`}
+          caption={`NEET PG ${academicYear} Open-category closing ranks for ${label} by college and quota`}
         />
         <SourceNote sources={sources} academicYear={academicYear} />
       </div>

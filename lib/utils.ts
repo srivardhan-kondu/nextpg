@@ -10,6 +10,17 @@ export function formatRank(n: number): string {
   return new Intl.NumberFormat('en-IN').format(Math.round(n));
 }
 
+/**
+ * "MD General Medicine". Branch names imported from MCC already carry their
+ * degree (MD, MS, DNB, Diploma…) so MD and DNB seats in one specialty stay
+ * distinct; older names don't, so the degree is prefixed only when missing.
+ */
+export function branchLabel(branch: { name: string; degree: string }): string {
+  return branch.name.toLowerCase().startsWith(branch.degree.toLowerCase())
+    ? branch.name
+    : `${branch.degree} ${branch.name}`;
+}
+
 export function formatRankRange(min: number, max: number): string {
   return `${formatRank(min)} – ${formatRank(max)}`;
 }

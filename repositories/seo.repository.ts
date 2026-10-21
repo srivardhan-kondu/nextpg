@@ -1,5 +1,6 @@
 import { prisma } from '@/lib/prisma';
 import { LATEST_CUTOFF_YEAR } from '@/config/site';
+import { slugify } from '@/lib/utils';
 
 /**
  * Read models for the public, indexable cutoff pages.
@@ -82,9 +83,11 @@ export const seoRepository = {
 
   /** Branches with enough verified rows to carry their own page. */
   async publishedBranches(academicYear = LATEST_CUTOFF_YEAR) {
+    // Counted the way publishedBranch renders: Open-category rows only, so a
+    // listed branch can never turn out to be a 404.
     const grouped = await prisma.historicalCutoff.groupBy({
       by: ['branchId'],
-      where: publishable(academicYear),
+      where: { ...publishable(academicYear), category: 'GENERAL' },
       _count: { _all: true },
     });
 
@@ -103,7 +106,11 @@ export const seoRepository = {
       .sort((a, b) => b.popularity - a.popularity);
   },
 
-  /** Every verified row for one branch, across colleges. */
+  /**
+   * Open-category rows for one branch, across colleges. A course is offered
+   * at hundreds of institutes, so every category would mean tables of 2,000+
+   * rows; category-wise ranks live on each college's page instead.
+   */
   async publishedBranch(slug: string, academicYear = LATEST_CUTOFF_YEAR) {
     const branch = await prisma.branch.findUnique({
       where: { slug },
@@ -112,7 +119,7 @@ export const seoRepository = {
     if (!branch || !branch.isActive) return null;
 
     const cutoffs = await prisma.historicalCutoff.findMany({
-      where: { branchId: branch.id, ...publishable(academicYear) },
+      where: { branchId: branch.id, category: 'GENERAL', ...publishable(academicYear) },
       select: {
         closingRank: true, openingRank: true, seatCount: true, quota: true,
         category: true, subCategory: true, round: true, state: true, source: true, verifiedAt: true,
@@ -135,10 +142,32 @@ export const seoRepository = {
       this.publishedBranches(academicYear),
     ]);
 
+    const states = [...new Set(colleges.map((c) => slugify(c.state)))];
     return {
       colleges: colleges.map((c) => c.slug),
       branches: branches.map((b) => b.slug),
+      states,
     };
+  },
+
+  /** States that have at least one published college, with counts. */
+  async publishedStates(academicYear = LATEST_CUTOFF_YEAR) {
+    const colleges = await this.publishedColleges(academicYear);
+    const byState = new Map<string, { state: string; slug: string; collegeCount: number; rowCount: number }>();
+    for (const c of colleges) {
+      const entry = byState.get(c.state) ?? { state: c.state, slug: slugify(c.state), collegeCount: 0, rowCount: 0 };
+      entry.collegeCount += 1;
+      entry.rowCount += c.rowCount;
+      byState.set(c.state, entry);
+    }
+    return [...byState.values()].sort((a, b) => a.state.localeCompare(b.state));
+  },
+
+  /** Published colleges in one state, looked up by the state's slug. */
+  async publishedState(slug: string, academicYear = LATEST_CUTOFF_YEAR) {
+    const colleges = (await this.publishedColleges(academicYear)).filter((c) => slugify(c.state) === slug);
+    if (colleges.length === 0) return null;
+    return { state: colleges[0]!.state, colleges, academicYear };
   },
 
   /** Most recent verification stamp — drives honest `lastModified` values. */

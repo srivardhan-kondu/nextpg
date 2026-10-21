@@ -77,7 +77,10 @@ export const CREDITS_PER_REPORT = 1;
 export const EXAM_YEAR = 2026;
 
 /** The most recent year we hold closing-rank data for. Drives every lookup. */
-export const LATEST_CUTOFF_YEAR = 2024;
+export const LATEST_CUTOFF_YEAR = 2025;
+
+/** Where those closing ranks come from, as shown to candidates. */
+export const CUTOFF_SOURCE_LABEL = `MCC ${LATEST_CUTOFF_YEAR} Round 1`;
 
 /**
  * NEET PG 2026 pattern (NBEMS information bulletin): 180 MCQs, +4 correct,

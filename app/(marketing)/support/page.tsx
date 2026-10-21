@@ -5,7 +5,7 @@ import { MarketingHeader } from '@/features/landing/components/marketing-header'
 import { MarketingFooter } from '@/features/landing/components/marketing-footer';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { siteConfig, pricing, PREDICTION_DISCLAIMER } from '@/config/site';
+import { siteConfig, pricing, PREDICTION_DISCLAIMER, CUTOFF_SOURCE_LABEL } from '@/config/site';
 import { pageMetadata } from '@/lib/seo/metadata';
 
 export const metadata = pageMetadata({
@@ -32,7 +32,7 @@ const FAQS = [
   {
     question: 'Where does the cutoff data come from?',
     answer:
-      'Published closing ranks from MCC and state counseling authorities. Every college we show is backed by a stored cutoff row — we never generate or guess a cutoff.',
+      `MCC's official ${CUTOFF_SOURCE_LABEL} allotment result: every seat MCC allotted and the rank it went to. Every college we show is backed by a stored cutoff row — we never generate or guess a cutoff. State quota results are being added; where they are missing, your report says so.`,
   },
   {
     question: 'My payment succeeded but I have no credits.',
