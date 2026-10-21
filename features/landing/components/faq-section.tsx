@@ -1,7 +1,10 @@
+import { EXAM_FACTS, SCHEDULE, formatDay, formatLong } from '@/lib/content/counselling';
+
 /**
  * Single source for the FAQ. Exported because the landing page emits FAQPage
  * JSON-LD from it: Google requires the marked-up answer to be the answer
  * actually visible on the page, so these must never be maintained twice.
+ * Counselling dates come from lib/content/counselling.ts, never typed here.
  */
 export const faqs = [
   {
@@ -26,23 +29,23 @@ export const faqs = [
   },
   {
     q: 'How does MCC PG counselling work in 2026?',
-    a: 'MCC (Medical Counselling Committee) conducts NEET PG counselling for All India Quota (AIQ) seats — 50% of government PG seats, all central university seats, and all deemed university seats. It typically runs 3 rounds: Round 1, Round 2, and a Stray Vacancy Round. Candidates register, pay a security deposit, fill choices, and are allotted seats based on NEET PG merit. State quota seats (the other 50%) are filled by respective state counselling authorities separately.',
+    a: 'MCC (the Medical Counselling Committee) fills the 50% All India Quota of government PG seats, 100% of deemed university seats, all DNB seats, and the seats of central universities and institutes such as DU, BHU and AMU. It runs four online rounds: Round 1, Round 2, Round 3 and a Stray Vacancy Round. In each round you register, pay the fee and security deposit, fill and lock choices, and are allotted a seat by NEET PG rank and choice order. State quota seats are filled separately by each state\'s counselling authority.',
   },
   {
     q: 'What is the difference between AIQ and state quota in NEET PG?',
-    a: 'All India Quota (AIQ) is 50% of seats in government medical colleges, filled by MCC based on national NEET PG merit — open to candidates from any state. State quota is the remaining 50%, filled by the state\'s own counselling authority — usually restricted to candidates with domicile in that state. Deemed university seats and central institute seats fall entirely under AIQ.',
+    a: 'All India Quota (AIQ) is 50% of the PG seats in government medical colleges, filled by MCC on national NEET PG merit and open to candidates from every state. State quota is the remaining 50%, filled by that state\'s own counselling authority and usually limited to candidates with the state\'s domicile. Deemed university and DNB seats are not split this way: MCC fills all of them.',
   },
   {
     q: 'When does NEET PG 2026 counselling start?',
-    a: 'MCC typically announces NEET PG counselling dates after NEET PG results are declared, usually 4–6 weeks after the exam. The schedule is published on mcc.nic.in. Round 1 registration generally opens within 6–8 weeks of the result. NextPG updates its predictor data each counselling cycle.',
+    a: `NBEMS declared NEET PG 2026 results on ${formatLong(EXAM_FACTS.resultDate)}. MCC Round 1 registration opened on ${formatDay(SCHEDULE[0].registration[0])} and closes on ${formatDay(SCHEDULE[0].registration[1])}, with the Round 1 seat allotment result due on ${formatDay(SCHEDULE[0].result)}. Round 2 registration opens on ${formatDay(SCHEDULE[1].registration[0])}, Round 3 on ${formatDay(SCHEDULE[2].registration[0])} and the stray vacancy round on ${formatDay(SCHEDULE[3].registration[0])}. These dates are MCC's tentative schedule, so confirm them on mcc.nic.in.`,
   },
   {
     q: 'What is stray vacancy round in NEET PG counselling?',
-    a: 'The Stray Vacancy Round (also called Round 3 or Mop-Up round) is the final round of MCC counselling where seats left unfilled after Rounds 1 and 2 are offered again. Candidates who were not allotted seats or who are fresh to counselling can participate. Seats are usually filled at slightly lower closing ranks than earlier rounds.',
+    a: 'The stray vacancy round is the fourth and final MCC round, held after Round 3 to fill seats that are still empty. It is a separate round, not another name for Round 3. Candidates who did not register in Rounds 1–3 can join it, as can registered candidates who were not allotted a seat earlier. A stray vacancy seat must be joined; not joining forfeits the security deposit.',
   },
   {
-    q: 'Can I predict my NEET PG college before results are declared?',
-    a: 'Yes. NextPG lets you enter your expected score immediately after the exam to get an estimated rank range and a shortlist of colleges you are likely eligible for — split by AIQ and state quota. This helps you research and shortlist colleges before the official result.',
+    q: 'Can I check which colleges my NEET PG 2026 score can get?',
+    a: 'Yes. Enter your NEET PG 2026 score and profile to get an estimated rank range and a shortlist of MD/MS colleges and branches you are likely eligible for, split by AIQ and state quota and matched against last year\'s closing ranks. Use it to plan your choice list before choice locking closes.',
   },
   {
     q: 'Does this tool work for INI-CET and AIIMS PG counselling?',
@@ -58,7 +61,7 @@ export const faqs = [
   },
   {
     q: 'Which states have separate NEET PG counselling?',
-    a: 'Most states conduct their own counselling for state quota seats. Major ones include: Telangana (KNRUHS), Andhra Pradesh (Dr. NTR UHS), Tamil Nadu (MRB / TNPG), Karnataka (KEA), Maharashtra (DMER), Delhi (DGHS), Rajasthan (RUHS), UP (UPUMS), and others. Each has its own registration window, eligibility rules, and closing ranks that may differ significantly from AIQ cutoffs.',
+    a: 'Almost every state runs its own counselling for state quota seats. For example: Telangana (KNRUHS), Andhra Pradesh (Dr. NTR UHS), Tamil Nadu (Selection Committee, DME), Karnataka (KEA), Maharashtra (State CET Cell), Kerala (CEE), Uttar Pradesh (DGME), Rajasthan (RUHS), Gujarat (Admission Committee for Professional Medical Courses) and West Bengal (WBMCC). Each has its own registration window, domicile rules and closing ranks. In Delhi, MCC fills the institutional quota of DU and the IP University-affiliated central institutes alongside AIQ.',
   },
 ];
 

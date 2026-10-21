@@ -10,14 +10,13 @@ import { MarketingFooter } from '@/features/landing/components/marketing-footer'
  * before the first byte. Their content is identical for every visitor, so the
  * cost buys nothing.
  *
- * The only thing the session changes here is one nav link, and rendering its
- * signed-out form is harmless: middleware already redirects a signed-in user
- * from /login to /dashboard, so the link still lands them in the right place.
+ * The only thing the session changes here is one nav link, and the header
+ * resolves that on the client, so signed-in visitors still see "Dashboard".
  */
 export default function CutoffsLayout({ children }: { children: React.ReactNode }) {
   return (
     <>
-      <MarketingHeader isLoggedIn={false} />
+      <MarketingHeader />
       <main id="main" className="mx-auto w-full max-w-5xl px-5 py-10 lg:py-14">{children}</main>
       <MarketingFooter />
     </>

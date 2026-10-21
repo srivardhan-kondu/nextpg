@@ -1,3 +1,5 @@
+import { cache } from 'react';
+import type { Metadata } from 'next';
 import Link from 'next/link';
 import { LATEST_CUTOFF_YEAR, EXAM_YEAR } from '@/config/site';
 import { pageMetadata } from '@/lib/seo/metadata';
@@ -6,19 +8,44 @@ import { graph, breadcrumbSchema } from '@/lib/seo/structured-data';
 import { COLLEGE_TYPE_LABEL } from '@/lib/constants';
 import { seoRepository } from '@/repositories/seo.repository';
 
-export const metadata = pageMetadata({
-  title: `NEET PG Cutoff ${LATEST_CUTOFF_YEAR} — Closing Ranks by College & Branch`,
-  description:
-    `Published NEET PG ${LATEST_CUTOFF_YEAR} closing ranks for MD and MS seats, broken down by ` +
-    'college, branch, quota and category. Every figure is traced to its counselling source.',
-  path: '/neet-pg-cutoffs',
-  keywords: [
-    `NEET PG cutoff ${LATEST_CUTOFF_YEAR}`,
-    'NEET PG closing rank',
-    'MD MS cutoff college wise',
-    'AIQ closing rank NEET PG',
-  ],
+/** One query pair per render, shared by generateMetadata and the page. */
+const loadHub = cache(async () => {
+  const [colleges, branches] = await Promise.all([
+    seoRepository.publishedColleges(),
+    seoRepository.publishedBranches(),
+  ]);
+  return { colleges, branches, hasData: colleges.length > 0 || branches.length > 0 };
 });
+
+/**
+ * Until verified cutoffs exist this page is a placeholder, and an indexed
+ * placeholder is thin content that counts against the whole domain. So it is
+ * `noindex` (links still followed) until there is data, and indexable the day
+ * the first verified import lands — no code change needed.
+ */
+export async function generateMetadata(): Promise<Metadata> {
+  let hasData = false;
+  try {
+    ({ hasData } = await loadHub());
+  } catch {
+    // Database unreachable: the page itself will fail; keep metadata safe.
+  }
+
+  return pageMetadata({
+    title: `NEET PG Cutoff ${LATEST_CUTOFF_YEAR} — Closing Ranks by College & Branch`,
+    description:
+      `Published NEET PG ${LATEST_CUTOFF_YEAR} closing ranks for MD and MS seats, broken down by ` +
+      'college, branch, quota and category. Every figure is traced to its counselling source.',
+    path: '/neet-pg-cutoffs',
+    noindex: !hasData,
+    keywords: [
+      `NEET PG cutoff ${LATEST_CUTOFF_YEAR}`,
+      'NEET PG closing rank',
+      'MD MS cutoff college wise',
+      'AIQ closing rank NEET PG',
+    ],
+  });
+}
 
 /**
  * Revalidated daily. Cutoff data changes only when an admin verifies an import,
@@ -28,12 +55,7 @@ export const metadata = pageMetadata({
 export const revalidate = 86400;
 
 export default async function CutoffHubPage() {
-  const [colleges, branches] = await Promise.all([
-    seoRepository.publishedColleges(),
-    seoRepository.publishedBranches(),
-  ]);
-
-  const hasData = colleges.length > 0 || branches.length > 0;
+  const { colleges, branches, hasData } = await loadHub();
 
   return (
     <>

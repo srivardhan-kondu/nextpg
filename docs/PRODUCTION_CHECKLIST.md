@@ -46,6 +46,14 @@ Work top to bottom. Anything marked **blocking** must be true before you take re
 - [ ] Quota rules reviewed for every state you actively market in
 - [ ] `LATEST_CUTOFF_YEAR` and `EXAM_YEAR` in `config/site.ts` match the current cycle
 
+## Search
+
+- [ ] Site verified in Google Search Console (set `GOOGLE_SITE_VERIFICATION`, or verify by DNS) and `/sitemap.xml` submitted
+- [ ] Same in Bing Webmaster Tools (`BING_SITE_VERIFICATION`) — it also feeds several AI answer engines
+- [ ] `www.` redirects to the bare domain (handled in `next.config.ts`; confirm with `curl -I https://www.<domain>`)
+- [ ] Counselling dates in `lib/content/counselling.ts` match the latest MCC notice; bump `GUIDE_UPDATED` whenever they change
+- [ ] After the first verified cutoff import, `/neet-pg-cutoffs` is indexable (no `noindex` meta) and listed in the sitemap
+
 ## Access control
 
 - [ ] **blocking** At least one `SUPER_ADMIN` exists (`npm run create:admin -- you@domain --super`)

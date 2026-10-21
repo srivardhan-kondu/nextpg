@@ -1,13 +1,13 @@
-import { auth } from '@/auth';
 import { MarketingHeader } from '@/features/landing/components/marketing-header';
 import { MarketingFooter } from '@/features/landing/components/marketing-footer';
 
 /**
  * Shared chrome + prose styling for the legal pages. Not a route layout —
  * these pages sit inside (marketing) alongside the landing page, which brings
- * its own header.
+ * its own header. Reads no session, so the pages render statically; the
+ * header resolves login state on the client.
  */
-export async function LegalPage({
+export function LegalPage({
   title,
   updated,
   children,
@@ -16,11 +16,9 @@ export async function LegalPage({
   updated: string;
   children: React.ReactNode;
 }) {
-  const session = await auth();
-
   return (
     <>
-      <MarketingHeader isLoggedIn={Boolean(session?.user)} />
+      <MarketingHeader />
       <main id="main" className="mx-auto w-full max-w-3xl px-5 py-12 lg:py-16">
         <h1 className="text-3xl font-bold tracking-tight lg:text-4xl">{title}</h1>
         <p className="mt-2 text-sm text-muted-foreground">Last updated {updated}</p>

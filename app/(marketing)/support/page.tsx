@@ -1,7 +1,6 @@
 import Link from 'next/link';
 import { CreditCard, HelpCircle, Mail, ShieldQuestion } from 'lucide-react';
 
-import { auth } from '@/auth';
 import { MarketingHeader } from '@/features/landing/components/marketing-header';
 import { MarketingFooter } from '@/features/landing/components/marketing-footer';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -48,12 +47,10 @@ const FAQS = [
 ];
 
 /** Public on purpose — it is linked from the marketing footer and from the app sidebar. */
-export default async function SupportPage() {
-  const session = await auth();
-
+export default function SupportPage() {
   return (
     <>
-      <MarketingHeader isLoggedIn={Boolean(session?.user)} />
+      <MarketingHeader />
 
       <main id="main" className="mx-auto w-full max-w-3xl px-5 py-12 lg:py-16">
         <h1 className="text-3xl font-bold tracking-tight lg:text-4xl">Help &amp; Support</h1>

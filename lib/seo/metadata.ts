@@ -31,8 +31,11 @@ export function pageMetadata(input: {
   /** Set for pages that exist for users but should not compete in search. */
   noindex?: boolean;
   keywords?: readonly string[];
+  /** A page-specific share card. Defaults to the site-wide one. */
+  image?: { url: string; alt: string };
 }): Metadata {
   const url = new URL(input.path, siteConfig.url).toString();
+  const image = input.image ? { ...OG_IMAGE, ...input.image } : OG_IMAGE;
 
   return {
     title: input.title,
@@ -46,13 +49,13 @@ export function pageMetadata(input: {
       siteName: siteConfig.brand,
       title: input.title,
       description: input.description,
-      images: [OG_IMAGE],
+      images: [image],
     },
     twitter: {
       card: 'summary_large_image',
       title: input.title,
       description: input.description,
-      images: [OG_IMAGE.url],
+      images: [image.url],
     },
     ...(input.noindex ? { robots: { index: false, follow: true } } : {}),
   };

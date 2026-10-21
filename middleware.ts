@@ -45,12 +45,13 @@ export default auth((req: NextRequest & { auth: unknown }) => {
 });
 
 export const config = {
-  // sitemap.xml, robots.txt, the generated icon/OG image and the public cutoff
-  // pages are crawler-facing and identical for everyone. Running the auth
+  // sitemap.xml, robots.txt, the generated icon/OG image, the counselling
+  // guide and the public cutoff pages are crawler-facing and identical for
+  // everyone. Running the auth
   // middleware over them costs a session lookup per request and attaches a
   // Set-Cookie, which makes the CDN treat the response as private and stop
   // caching it — on the one part of the site built to be crawled at scale.
   matcher: [
-    '/((?!api/auth|api/webhooks|_next/static|_next/image|favicon.ico|sitemap.xml|robots.txt|opengraph-image|icon|manifest.webmanifest|neet-pg-cutoffs|.*\\.(?:png|jpg|jpeg|svg|gif|webp|ico)$).*)',
+    '/((?!api/auth|api/webhooks|_next/static|_next/image|favicon.ico|sitemap.xml|robots.txt|opengraph-image|og/|icon|manifest.webmanifest|neet-pg-cutoffs|neet-pg-counselling|.*\\.(?:png|jpg|jpeg|svg|gif|webp|ico)$).*)',
   ],
 };

@@ -1,4 +1,24 @@
 import type { NextConfig } from 'next';
+import { siteConfig } from './config/site';
+
+/**
+ * `www.` and the bare domain both served the full site, so every page existed
+ * at two URLs. The canonical tag points Google at the bare domain, but a
+ * permanent redirect is what actually consolidates links and crawl onto one
+ * host. Derived from the canonical origin, so it follows a domain change.
+ */
+const canonical = new URL(siteConfig.url);
+const wwwRedirects =
+  canonical.hostname.startsWith('www.') || canonical.hostname === 'localhost'
+    ? []
+    : [
+        {
+          source: '/:path*',
+          has: [{ type: 'host' as const, value: `www.${canonical.hostname}` }],
+          destination: `${canonical.origin}/:path*`,
+          permanent: true,
+        },
+      ];
 
 // React Refresh eval()s modules in development; a production build never does.
 const isDev = process.env.NODE_ENV !== 'production';
@@ -25,6 +45,9 @@ const nextConfig: NextConfig = {
   poweredByHeader: false,
   serverExternalPackages: ['@react-pdf/renderer', 'razorpay', 'nodemailer'],
   experimental: { serverActions: { bodySizeLimit: '2mb' } },
+  async redirects() {
+    return wwwRedirects;
+  },
   async headers() {
     return [
       {

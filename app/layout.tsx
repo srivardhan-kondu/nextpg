@@ -26,8 +26,18 @@ export const metadata: Metadata = {
   authors: [{ name: siteConfig.brand }],
   creator: siteConfig.brand,
   publisher: siteConfig.brand,
-  alternates: { canonical: '/' },
+  // No site-wide canonical: every indexable page sets its own via
+  // pageMetadata(). A root default of '/' would tell Google that any page
+  // without one is a duplicate of the homepage.
   category: 'education',
+  // Search Console / Bing Webmaster ownership tags. Set the tokens in the
+  // deployment's environment; nothing is emitted while they are unset.
+  verification: {
+    ...(process.env.GOOGLE_SITE_VERIFICATION ? { google: process.env.GOOGLE_SITE_VERIFICATION } : {}),
+    ...(process.env.BING_SITE_VERIFICATION
+      ? { other: { 'msvalidate.01': process.env.BING_SITE_VERIFICATION } }
+      : {}),
+  },
   openGraph: {
     type: 'website',
     locale: 'en_IN',

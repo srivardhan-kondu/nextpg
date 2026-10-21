@@ -5,7 +5,6 @@ import { siteConfig, pricing, PREDICTION_DISCLAIMER } from '@/config/site';
 import { pageMetadata } from '@/lib/seo/metadata';
 import { MarketingHeader } from '@/features/landing/components/marketing-header';
 import { MarketingFooter } from '@/features/landing/components/marketing-footer';
-import { auth } from '@/auth';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -32,12 +31,10 @@ const SECTIONS = [
   'Recommended branches', 'Recommended colleges', 'Counseling strategy', 'Important notes',
 ];
 
-export default async function SampleReportPage() {
-  const session = await auth();
-
+export default function SampleReportPage() {
   return (
     <>
-      <MarketingHeader isLoggedIn={Boolean(session?.user)} />
+      <MarketingHeader />
 
       <main id="main" className="mx-auto w-full max-w-5xl px-5 py-12 lg:py-16">
         <div className="text-center">

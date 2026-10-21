@@ -1,5 +1,6 @@
 import type { MetadataRoute } from 'next';
 import { siteConfig } from '@/config/site';
+import { GUIDE_UPDATED } from '@/lib/content/counselling';
 import { seoRepository } from '@/repositories/seo.repository';
 
 /**
@@ -17,14 +18,22 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const now = new Date();
   const url = (path: string) => new URL(path, siteConfig.url).toString();
 
+  // `lastModified` is only given where we know when the content changed.
+  // Google uses it only while it stays accurate, so stamping every URL with
+  // the request time (as this once did) teaches it to ignore the field.
+  // The homepage's counselling FAQ and notice come from the guide's content
+  // file, so the two share a date. Legal pages carry their own "last updated".
+  const LEGAL_UPDATED = new Date('2026-09-04');
+  const guideUpdated = new Date(GUIDE_UPDATED);
+
   const staticEntries: MetadataRoute.Sitemap = [
-    { url: siteConfig.url, lastModified: now, changeFrequency: 'weekly', priority: 1 },
-    { url: url('/neet-pg-counselling'), lastModified: now, changeFrequency: 'weekly', priority: 0.95 },
-    { url: url('/sample-report'), lastModified: now, changeFrequency: 'monthly', priority: 0.8 },
-    { url: url('/support'), lastModified: now, changeFrequency: 'monthly', priority: 0.5 },
-    { url: url('/terms'), lastModified: now, changeFrequency: 'yearly', priority: 0.3 },
-    { url: url('/privacy'), lastModified: now, changeFrequency: 'yearly', priority: 0.3 },
-    { url: url('/refund-policy'), lastModified: now, changeFrequency: 'yearly', priority: 0.3 },
+    { url: siteConfig.url, lastModified: guideUpdated, changeFrequency: 'weekly', priority: 1 },
+    { url: url('/neet-pg-counselling'), lastModified: guideUpdated, changeFrequency: 'daily', priority: 0.95 },
+    { url: url('/sample-report'), changeFrequency: 'monthly', priority: 0.8 },
+    { url: url('/support'), changeFrequency: 'monthly', priority: 0.5 },
+    { url: url('/terms'), lastModified: LEGAL_UPDATED, changeFrequency: 'yearly', priority: 0.3 },
+    { url: url('/privacy'), lastModified: LEGAL_UPDATED, changeFrequency: 'yearly', priority: 0.3 },
+    { url: url('/refund-policy'), lastModified: LEGAL_UPDATED, changeFrequency: 'yearly', priority: 0.3 },
   ];
 
   // A database outage must not take the sitemap down with it: Google treats a
