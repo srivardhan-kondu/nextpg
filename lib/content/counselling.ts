@@ -151,10 +151,17 @@ export const STATE_AUTHORITIES: readonly StateAuthority[] = [
 export const COUNSELLING_SOURCES = [
   { label: 'MCC — PG medical counselling (official site)', url: 'https://mcc.nic.in/pg-medical-counselling/' },
   {
+    label: 'MCC tentative schedule for PG counselling 2026 (AIQ, deemed and central universities)',
+    url: 'https://cdnbbsr.s3waas.gov.in/s3e0f7a4d0ef9b84b83b693bbf3feb8e6e/uploads/2026/10/202610071411981089.pdf',
+  },
+  {
     label: 'MCC NEET-PG Counselling 2026 information bulletin (draft v10, 5 October 2026)',
     url: 'https://cdnbbsr.s3waas.gov.in/s3e0f7a4d0ef9b84b83b693bbf3feb8e6e/uploads/2026/10/202610082121348550.pdf',
   },
-  { label: 'NBEMS — NEET PG 2026 notices and results', url: 'https://natboard.edu.in' },
+  {
+    label: 'NBEMS — NEET PG 2026 published result (score and rank of every candidate)',
+    url: 'https://natboard.edu.in/pdoof/NEET-PG%202026%20Published%20Result_DS.pdf',
+  },
 ] as const;
 
 /* ── Date helpers ─────────────────────────────────────────────────────────── */

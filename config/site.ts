@@ -79,12 +79,16 @@ export const EXAM_YEAR = 2026;
 /** The most recent year we hold closing-rank data for. Drives every lookup. */
 export const LATEST_CUTOFF_YEAR = 2024;
 
-/** NEET PG scoring: +4 correct, -1 wrong, 200 questions. */
+/**
+ * NEET PG 2026 pattern (NBEMS information bulletin): 180 MCQs, +4 correct,
+ * −1 wrong, so 720 marks. It was 200 questions / 800 marks up to 2025. Every
+ * "/720", question limit and validation bound derives from this object.
+ */
 export const EXAM = {
-  totalQuestions: 200,
+  totalQuestions: 180,
   marksPerCorrect: 4,
   negativePerWrong: 1,
-  maxScore: 800,
+  maxScore: 720,
 } as const;
 
 export const PREDICTION_DISCLAIMER =

@@ -112,8 +112,10 @@ export const SAMPLE_REPORT = {
   candidateName: 'Sample Candidate',
   state: 'Telangana',
   category: 'General',
-  expectedScore: 428,
-  rankRange: '12,000 – 16,500',
+  // Out of 720 (the 2026 pattern). The range is what the engine returns for
+  // this score; keep the two in step if either changes.
+  expectedScore: 492,
+  rankRange: '12,907 – 16,333',
   confidence: 78,
   aiqCount: 38,
   stateCount: 64,

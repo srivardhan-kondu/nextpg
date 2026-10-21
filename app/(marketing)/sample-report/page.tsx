@@ -1,7 +1,7 @@
 import Link from 'next/link';
 import { ArrowRight, Check } from 'lucide-react';
 
-import { siteConfig, pricing, PREDICTION_DISCLAIMER } from '@/config/site';
+import { siteConfig, pricing, PREDICTION_DISCLAIMER, EXAM } from '@/config/site';
 import { pageMetadata } from '@/lib/seo/metadata';
 import { MarketingHeader } from '@/features/landing/components/marketing-header';
 import { MarketingFooter } from '@/features/landing/components/marketing-footer';
@@ -59,7 +59,7 @@ export default function SampleReportPage() {
                 {SAMPLE_REPORT.rankRange}
               </p>
               <p className="mt-2 text-sm text-muted-foreground">
-                Expected score {SAMPLE_REPORT.expectedScore}/800
+                Expected score {SAMPLE_REPORT.expectedScore}/{EXAM.maxScore}
               </p>
             </div>
             <div className="flex items-center gap-4 sm:flex-col sm:items-end">
@@ -70,7 +70,7 @@ export default function SampleReportPage() {
         </Card>
 
         <div className="mt-5 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          <StatTile label="Expected score" value={SAMPLE_REPORT.expectedScore} hint="out of 800" />
+          <StatTile label="Expected score" value={SAMPLE_REPORT.expectedScore} hint={`out of ${EXAM.maxScore}`} />
           <StatTile label="Confidence" value={`${SAMPLE_REPORT.confidence}%`} tone="strong" />
           <StatTile label="AIQ opportunities" value={SAMPLE_REPORT.aiqCount} tone="primary" />
           <StatTile label="State quota opportunities" value={SAMPLE_REPORT.stateCount} tone="primary" />

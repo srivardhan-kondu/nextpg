@@ -188,7 +188,7 @@ describe('RuleBasedPredictionProvider', () => {
   it('stamps the engine version so a report is reproducible', async () => {
     const result = await new RuleBasedPredictionProvider().predict(input);
     expect(result.providerId).toBe('rule-based');
-    expect(result.engineVersion).toBe('rule-based-v1');
+    expect(result.engineVersion).toBe('rule-based-v2');
     expect(new Date(result.generatedAt).toString()).not.toBe('Invalid Date');
   });
 

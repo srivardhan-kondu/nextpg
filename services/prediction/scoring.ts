@@ -1,39 +1,31 @@
 import { EXAM } from '@/config/site';
 import { clamp } from '@/lib/utils';
+import { SCORE_RANK_2026 } from '@/services/prediction/data/score-rank-2026';
 
 /**
  * Score ↔ rank mapping.
  *
- * NEET PG rank is a function of the whole cohort, which we cannot know in
- * advance. We model the published score→rank distribution as a piecewise curve
- * anchored on historically released marks-vs-rank data, then widen the result
- * into a band. Anchors live in one place so they can be re-fitted each year
- * without touching the engine.
+ * Ranks come from NBEMS's official NEET PG 2026 result, which lists every
+ * candidate's score and rank. For each score someone achieved, the table holds
+ * the best and worst rank given for it (ties are broken by NBEMS's rules), so
+ * the lookup is exact rather than fitted. Regenerate the table each year with
+ * scripts/build-score-rank-table.ts.
+ *
+ * This replaced a hand-fitted curve on the old 800-mark scale. NEET PG 2026
+ * moved to 180 questions (720 marks), and that curve put most candidates 2–3×
+ * ahead of their real rank.
  */
+const TABLE = SCORE_RANK_2026;
+const ROWS = TABLE.rows; // descending by score
+const TOP = ROWS[0]!;
+const BOTTOM = ROWS[ROWS.length - 1]!;
+const BY_SCORE = new Map(ROWS.map(([score, best, worst]) => [score, { best, worst }]));
 
-/** [score, approximate all-India rank] anchors, descending by score. */
-const SCORE_RANK_ANCHORS: ReadonlyArray<readonly [number, number]> = [
-  [800, 1],
-  [700, 60],
-  [650, 250],
-  [600, 800],
-  [560, 1800],
-  [520, 3600],
-  [480, 6500],
-  [440, 11000],
-  [400, 18000],
-  [360, 27000],
-  [320, 39000],
-  [280, 54000],
-  [240, 72000],
-  [200, 95000],
-  [160, 120000],
-  [120, 150000],
-  [80, 180000],
-  [0, 220000],
-];
+/** Candidates ranked in the official result — the denominator for percentiles. */
+export const RANKED_CANDIDATES = TABLE.rankedCandidates;
 
-const TOTAL_CANDIDATES = 220_000;
+/** The year the score → rank table describes. */
+export const SCORE_RANK_YEAR = TABLE.year;
 
 export function computeScore(correct: number, wrong: number): number {
   return correct * EXAM.marksPerCorrect - wrong * EXAM.negativePerWrong;
@@ -44,54 +36,66 @@ export function computeUnattempted(correct: number, wrong: number): number {
 }
 
 /**
- * Log-linear interpolation between anchors — rank grows geometrically as score
- * falls, so interpolating in log space tracks the real curve far better than a
- * straight line.
+ * The official rank range for exactly this score, or null when no candidate
+ * scored it (or it lies outside the range anyone achieved).
+ */
+export function officialRankRange(score: number): { best: number; worst: number } | null {
+  return BY_SCORE.get(Math.round(score)) ?? null;
+}
+
+/**
+ * Point rank for a score.
+ *
+ * An achieved score maps to the middle of its official tie range. A score no
+ * one achieved maps to the rank just after everyone who scored higher — which
+ * is exactly where such a candidate would have been placed.
  */
 export function scoreToRank(score: number): number {
-  const s = clamp(score, 0, EXAM.maxScore);
+  const s = Math.round(score);
+  if (s >= TOP[0]) return TOP[1];
+  if (s <= BOTTOM[0]) return BOTTOM[2];
 
-  for (let i = 0; i < SCORE_RANK_ANCHORS.length - 1; i++) {
-    const upper = SCORE_RANK_ANCHORS[i]!;
-    const lower = SCORE_RANK_ANCHORS[i + 1]!;
-    const [hiScore, hiRank] = upper;
-    const [loScore, loRank] = lower;
+  const exact = BY_SCORE.get(s);
+  if (exact) return Math.round((exact.best + exact.worst) / 2);
 
-    if (s <= hiScore && s >= loScore) {
-      const span = hiScore - loScore;
-      if (span === 0) return hiRank;
-      const t = (hiScore - s) / span; // 0 at hiScore → 1 at loScore
-      const interpolated = Math.exp(Math.log(hiRank) + t * (Math.log(loRank) - Math.log(hiRank)));
-      return Math.round(interpolated);
-    }
+  // Rows are descending, so the last row scoring above s holds the worst rank
+  // any higher scorer received.
+  let worstAbove = TOP[2];
+  for (const [rowScore, , worst] of ROWS) {
+    if (rowScore < s) break;
+    worstAbove = worst;
   }
-  return TOTAL_CANDIDATES;
+  return worstAbove + 1;
 }
 
 export function rankToPercentile(rank: number): number {
-  const pct = ((TOTAL_CANDIDATES - rank) / TOTAL_CANDIDATES) * 100;
+  const pct = ((RANKED_CANDIDATES - rank) / RANKED_CANDIDATES) * 100;
   return Math.round(clamp(pct, 0, 100) * 100) / 100;
 }
 
 /**
- * Widen a point estimate into an honest range.
+ * Widen the point rank into the matching window.
  *
- * The spread is proportional (higher ranks are far less certain in absolute
- * terms) with a floor so top ranks don't collapse to a false-precision window.
+ * The rank itself is known precisely; the window stands for what is not:
+ * closing ranks move from one year to the next, so a seat that closed just
+ * past your rank last year may not this year. The spread is proportional
+ * (cutoffs drift more in absolute terms further down the list) with a floor so
+ * top ranks don't collapse to a false-precision window.
  */
 export function rankBand(pointRank: number): { min: number; max: number } {
   const proportional = pointRank <= 1_000 ? 0.35 : pointRank <= 10_000 ? 0.2 : pointRank <= 50_000 ? 0.16 : 0.14;
   const spread = Math.max(150, Math.round(pointRank * proportional));
   return {
     min: Math.max(1, pointRank - Math.round(spread * 0.6)),
-    max: pointRank + Math.round(spread * 0.9),
+    // Never past the last rank anyone received.
+    max: Math.min(RANKED_CANDIDATES, Math.max(pointRank, pointRank + Math.round(spread * 0.9))),
   };
 }
 
 /**
  * Confidence never reaches 100 — the product promises an estimate, not a fact.
- * Penalties: implausible attempt counts, extreme scores where anchors are thin,
- * and (added by the engine) sparse cutoff coverage.
+ * Penalties: implausible attempt counts, a score outside anything achieved in
+ * the official result, and (added by the engine) sparse cutoff coverage.
  */
 export function computeConfidence(params: {
   score: number;
@@ -105,7 +109,7 @@ export function computeConfidence(params: {
   const attempted = correct + wrong;
   if (attempted > EXAM.totalQuestions) confidence -= 25;
   if (attempted < 60) confidence -= 12; // very low attempts → unstable estimate
-  if (score > 680 || score < 120) confidence -= 10; // sparse anchor region
+  if (score > TOP[0] || score < BOTTOM[0]) confidence -= 10; // beyond any real result
 
   confidence -= Math.round((1 - clamp(cutoffCoverage, 0, 1)) * 22);
 

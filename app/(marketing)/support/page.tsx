@@ -18,7 +18,7 @@ const FAQS = [
   {
     question: 'How accurate is the rank prediction?',
     answer:
-      'It is an estimate, presented as a range with a confidence score. Your score is mapped to a rank using published score-vs-rank data, then widened to reflect real uncertainty. Plan against the upper bound of the range.',
+      'Your score is mapped to a rank using the official NEET PG 2026 result from NBEMS, which lists every candidate\'s score and rank, so the rank itself matches what NBEMS published. The range we show is wider on purpose: it allows for closing ranks moving from last year to this year. Plan against the upper bound of the range.',
   },
   {
     question: 'Does opening an old report cost a credit?',

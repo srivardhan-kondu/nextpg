@@ -2,6 +2,7 @@ import { ConfidenceRing } from '@/components/shared/confidence-ring';
 import { StatTile } from '@/components/shared/stat-tile';
 import { Disclaimer } from '@/components/shared/disclaimer';
 import { formatRankRange } from '@/lib/utils';
+import { EXAM } from '@/config/site';
 
 interface RankSummaryProps {
   expectedScore: number;
@@ -34,7 +35,7 @@ export function RankSummary({
             {formatRankRange(rankMin, rankMax)}
           </p>
           <p className="mt-2 text-sm text-muted-foreground">
-            Expected score {expectedScore}/800 · {percentile.toFixed(2)} percentile
+            Expected score {expectedScore}/{EXAM.maxScore} · {percentile.toFixed(2)} percentile
           </p>
         </div>
 
@@ -45,7 +46,7 @@ export function RankSummary({
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <StatTile label="Expected score" value={`${expectedScore}`} hint="out of 800" />
+        <StatTile label="Expected score" value={`${expectedScore}`} hint={`out of ${EXAM.maxScore}`} />
         <StatTile label="Confidence" value={`${confidence}%`} tone={tone} hint="never a guarantee" />
         <StatTile label="AIQ opportunities" value={aiqOpportunities} tone="primary" hint="All India Quota seats" />
         <StatTile

@@ -1,4 +1,15 @@
 import { EXAM_FACTS, SCHEDULE, formatDay, formatLong } from '@/lib/content/counselling';
+import { RANKED_CANDIDATES, SCORE_RANK_YEAR, officialRankRange } from '@/services/prediction/scoring';
+
+/** "500 marks was rank 11,828–12,111" — read from the official table, never typed. */
+function marksVsRank(score: number): string {
+  const r = officialRankRange(score);
+  if (!r) return `${score} marks had no candidates`;
+  const fmt = (n: number) => n.toLocaleString('en-IN');
+  return r.best === r.worst
+    ? `${score} marks was rank ${fmt(r.best)}`
+    : `${score} marks was rank ${fmt(r.best)}–${fmt(r.worst)}`;
+}
 
 /**
  * Single source for the FAQ. Exported because the landing page emits FAQPage
@@ -9,7 +20,7 @@ import { EXAM_FACTS, SCHEDULE, formatDay, formatLong } from '@/lib/content/couns
 export const faqs = [
   {
     q: 'How accurate is the rank prediction?',
-    a: 'The estimate is built from published score-to-rank data and last year\'s closing ranks. We always show a range and a confidence score rather than a single number, because the actual rank depends on the full candidate cohort, which nobody can know in advance.',
+    a: `Your rank comes straight from NBEMS's official NEET PG ${SCORE_RANK_YEAR} result, which lists the score and rank of all ${RANKED_CANDIDATES.toLocaleString('en-IN')} ranked candidates — so for a given score it matches the real rank. College chances are less certain, because closing ranks move from year to year, so we show a range and a confidence score rather than a single verdict.`,
   },
   {
     q: 'What does one credit get me?',
@@ -57,7 +68,7 @@ export const faqs = [
   },
   {
     q: 'What is the NEET PG marks vs rank relationship?',
-    a: 'The NEET PG score-to-rank relationship is not linear — it depends on the total number of candidates, the difficulty of the exam, and the distribution of scores in that particular year. A score of 400 might correspond to a rank of 20,000 in one year and 25,000 in the next. NextPG uses historical score–rank data to model this relationship and always presents the result as a range with a stated confidence level.',
+    a: `It is not linear, and it changes every year with the paper and the number of candidates. NEET PG ${SCORE_RANK_YEAR} had 180 questions for 720 marks. In the official result, ${marksVsRank(560)}, ${marksVsRank(500)}, ${marksVsRank(450)} and ${marksVsRank(400)}. NextPG uses the official result table for every score.`,
   },
   {
     q: 'Which states have separate NEET PG counselling?',

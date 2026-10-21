@@ -319,7 +319,7 @@ export default function NeetPgCounsellingPage() {
         {/* Key facts */}
         <dl className="mt-6 grid grid-cols-2 gap-4 rounded-[14px] border border-black/[0.08] bg-[#faf9f6] p-5 sm:grid-cols-3 sm:p-6 lg:grid-cols-5">
           {[
-            { label: 'Exam held', value: formatDay(EXAM_FACTS.examDate), sub: `${EXAM_YEAR}, by NBEMS` },
+            { label: 'Exam held', value: formatDay(EXAM_FACTS.examDate), sub: '180 questions · 720 marks' },
             { label: 'Result declared', value: formatDay(EXAM_FACTS.resultDate), sub: `${EXAM_FACTS.candidatesAppeared} appeared` },
             { label: 'MCC rounds', value: '4', sub: 'R1 · R2 · R3 · Stray' },
             { label: `PG seats via MCC, ${MCC_PG_LAST_YEAR.year}`, value: MCC_PG_LAST_YEAR.seats, sub: `across ${MCC_PG_LAST_YEAR.institutes} institutes` },

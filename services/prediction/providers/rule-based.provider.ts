@@ -2,8 +2,10 @@ import type { Likelihood } from '@prisma/client';
 import { cutoffRepository, type CutoffWithRefs } from '@/repositories/cutoff.repository';
 import { resolveEligibleQuotas } from '@/services/prediction/quota.service';
 import {
+  SCORE_RANK_YEAR,
   computeConfidence,
   computeScore,
+  officialRankRange,
   rankBand,
   rankToPercentile,
   scoreToRank,
@@ -169,7 +171,9 @@ function buildStrategy(params: {
 
 export class RuleBasedPredictionProvider implements PredictionProvider {
   readonly id = 'rule-based';
-  readonly version = 'rule-based-v1';
+  // v2: rank from the official NEET PG 2026 score → rank table (720-mark
+  // pattern). v1 reports used the fitted 800-mark curve; the stamp tells them apart.
+  readonly version = 'rule-based-v2';
   readonly label = 'Rule-based engine (historical cutoffs)';
 
   async predict(input: PredictionInput): Promise<PredictionResult> {
@@ -237,8 +241,16 @@ export class RuleBasedPredictionProvider implements PredictionProvider {
     // Headline college list: best strong options, topped up with moderates.
     const recommendedColleges = [...bands.STRONG.slice(0, 6), ...bands.MODERATE.slice(0, 4)];
 
+    const official = officialRankRange(expectedScore);
     const notes = [
       PREDICTION_DISCLAIMER,
+      ...(official
+        ? [
+            official.best === official.worst
+              ? `In the official NEET PG ${SCORE_RANK_YEAR} result, the candidate who scored ${expectedScore} was ranked ${formatRank(official.best)}.`
+              : `In the official NEET PG ${SCORE_RANK_YEAR} result, candidates who scored ${expectedScore} were ranked ${formatRank(official.best)}–${formatRank(official.worst)}.`,
+          ]
+        : []),
       `Based on ${LATEST_CUTOFF_YEAR} closing ranks for ${input.category} category.`,
       ...eligibility.notes,
     ];

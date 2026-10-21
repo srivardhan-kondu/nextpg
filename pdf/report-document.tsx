@@ -2,6 +2,7 @@ import * as React from 'react';
 import { Document, Page, Text, View } from '@react-pdf/renderer';
 import { styles, palette, likelihoodColor, likelihoodBg } from './theme';
 import { formatRank, formatRankRange } from '@/lib/utils';
+import { EXAM } from '@/config/site';
 import { CATEGORY_LABEL, COLLEGE_TYPE_LABEL, LIKELIHOOD_META, QUOTA_LABEL } from '@/lib/constants';
 import type { ReportData } from '@/types/report';
 import type { CollegeOpportunity } from '@/types/prediction';
@@ -118,7 +119,7 @@ export function ReportDocument({ data }: { data: ReportData }) {
             <Text style={styles.headlineLabel}>Estimated All India Rank</Text>
             <Text style={styles.headlineValue}>{formatRankRange(prediction.rankMin, prediction.rankMax)}</Text>
             <Text style={styles.headlineHint}>
-              Confidence {prediction.confidence}% · Expected score {exam.expectedScore}/800 · Percentile{' '}
+              Confidence {prediction.confidence}% · Expected score {exam.expectedScore}/{EXAM.maxScore} · Percentile{' '}
               {prediction.percentile.toFixed(2)}
             </Text>
           </View>
@@ -160,7 +161,7 @@ export function ReportDocument({ data }: { data: ReportData }) {
             <Stat label="Correct" value={String(exam.correctAnswers)} />
             <Stat label="Wrong" value={String(exam.wrongAnswers)} />
             <Stat label="Unattempted" value={String(exam.unattempted)} />
-            <Stat label="Expected score" value={`${exam.expectedScore}/800`} />
+            <Stat label="Expected score" value={`${exam.expectedScore}/${EXAM.maxScore}`} />
           </View>
           <View style={styles.statRow}>
             <Stat label="Estimated rank" value={formatRankRange(prediction.rankMin, prediction.rankMax)} />

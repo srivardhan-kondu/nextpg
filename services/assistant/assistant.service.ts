@@ -2,7 +2,7 @@ import { prisma } from '@/lib/prisma';
 import { sanitizeForPrompt } from '@/lib/security/sanitize';
 import { formatRank, formatRankRange } from '@/lib/utils';
 import { CATEGORY_LABEL, QUOTA_LABEL } from '@/lib/constants';
-import { PREDICTION_DISCLAIMER } from '@/config/site';
+import { PREDICTION_DISCLAIMER, EXAM } from '@/config/site';
 import type { PredictionResult } from '@/types/prediction';
 
 export class AssistantUnavailableError extends Error {
@@ -80,7 +80,7 @@ Name: ${prediction.candidateName}
 Domicile state: ${prediction.state}
 Category: ${CATEGORY_LABEL[prediction.category as keyof typeof CATEGORY_LABEL] ?? prediction.category}
 Sub-category: ${prediction.subCategory}
-Expected score: ${prediction.expectedScore}/800
+Expected score: ${prediction.expectedScore}/${EXAM.maxScore}
 Estimated rank range: ${formatRankRange(prediction.rankMin, prediction.rankMax)}
 Confidence in that estimate: ${prediction.confidence}%
 AIQ options found: ${prediction.aiqOpportunities}

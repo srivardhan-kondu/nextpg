@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
-  computeConfidence, computeScore, computeUnattempted, rankBand, rankToPercentile, scoreToRank,
+  RANKED_CANDIDATES, computeConfidence, computeScore, computeUnattempted, officialRankRange,
+  rankBand, rankToPercentile, scoreToRank,
 } from '@/services/prediction/scoring';
 import { EXAM } from '@/config/site';
 
@@ -21,7 +22,7 @@ describe('computeScore', () => {
 
 describe('computeUnattempted', () => {
   it('is the remainder of the paper', () => {
-    expect(computeUnattempted(100, 50)).toBe(50);
+    expect(computeUnattempted(100, 50)).toBe(EXAM.totalQuestions - 150);
   });
 
   it('never goes negative on impossible input', () => {
@@ -29,28 +30,52 @@ describe('computeUnattempted', () => {
   });
 });
 
+describe('exam pattern', () => {
+  it('uses the 2026 pattern: 180 questions, 720 marks', () => {
+    expect(EXAM.totalQuestions).toBe(180);
+    expect(EXAM.maxScore).toBe(720);
+  });
+});
+
 describe('scoreToRank', () => {
   it('is monotonically decreasing — a better score never gives a worse rank', () => {
-    const scores = [800, 700, 600, 500, 400, 300, 200, 100, 0];
+    const scores = [641, 600, 500, 400, 300, 200, 100, 0, -59];
     const ranks = scores.map(scoreToRank);
     for (let i = 1; i < ranks.length; i++) {
       expect(ranks[i]!).toBeGreaterThan(ranks[i - 1]!);
     }
   });
 
-  it('returns rank 1 for a perfect score', () => {
-    expect(scoreToRank(800)).toBe(1);
+  it('returns rank 1 for the top score and anything above it', () => {
+    expect(scoreToRank(641)).toBe(1);
+    expect(scoreToRank(EXAM.maxScore)).toBe(1);
   });
 
-  it('interpolates between anchors rather than snapping to them', () => {
-    const rank = scoreToRank(420); // between the 440 and 400 anchors
-    expect(rank).toBeGreaterThan(scoreToRank(440));
-    expect(rank).toBeLessThan(scoreToRank(400));
+  // Spot checks against NBEMS's published NEET PG 2026 result.
+  it.each([
+    [600, 101, 114],
+    [560, 1_535, 1_647],
+    [500, 11_828, 12_111],
+    [450, 28_677, 29_130],
+    [400, 51_152, 51_729],
+    [300, 107_551, 108_332],
+    [200, 178_857, 179_840],
+  ])('matches the official result: %i marks → rank %i–%i', (score, best, worst) => {
+    const rank = scoreToRank(score);
+    expect(rank).toBeGreaterThanOrEqual(best);
+    expect(rank).toBeLessThanOrEqual(worst);
+    expect(officialRankRange(score)).toEqual({ best, worst });
+  });
+
+  it('places a score nobody achieved just after everyone who scored higher', () => {
+    // 641 → rank 1 and 633 → rank 2; nobody scored 635.
+    expect(officialRankRange(635)).toBeNull();
+    expect(scoreToRank(635)).toBe(2);
   });
 
   it('clamps out-of-range input instead of extrapolating wildly', () => {
-    expect(scoreToRank(-500)).toBe(scoreToRank(0));
-    expect(scoreToRank(9999)).toBe(scoreToRank(800));
+    expect(scoreToRank(-500)).toBe(RANKED_CANDIDATES);
+    expect(scoreToRank(9999)).toBe(1);
   });
 });
 
@@ -65,6 +90,11 @@ describe('rankBand', () => {
 
   it('never produces a rank below 1', () => {
     expect(rankBand(2).min).toBeGreaterThanOrEqual(1);
+  });
+
+  it('never runs past the last rank anyone received', () => {
+    expect(rankBand(RANKED_CANDIDATES).max).toBe(RANKED_CANDIDATES);
+    expect(rankBand(RANKED_CANDIDATES - 10).max).toBeLessThanOrEqual(RANKED_CANDIDATES);
   });
 
   it('widens in absolute terms as rank grows', () => {
@@ -93,7 +123,7 @@ describe('computeConfidence', () => {
   });
 
   it('never collapses below the stated floor', () => {
-    const worst = computeConfidence({ score: 780, correct: 199, wrong: 90, cutoffCoverage: 0 });
+    const worst = computeConfidence({ score: 700, correct: 179, wrong: 90, cutoffCoverage: 0 });
     expect(worst).toBeGreaterThanOrEqual(35);
   });
 
@@ -105,7 +135,7 @@ describe('computeConfidence', () => {
 
   it('penalises an implausible attempt count', () => {
     const normal = computeConfidence(base);
-    const impossible = computeConfidence({ ...base, correct: 190, wrong: 50 });
+    const impossible = computeConfidence({ ...base, correct: 160, wrong: 40 });
     expect(impossible).toBeLessThan(normal);
   });
 });
